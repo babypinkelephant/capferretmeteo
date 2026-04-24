@@ -3,51 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cap Ferret Meteo 🌊</title>
-    <meta name="description" content="Aktuelles Wetter und Vorhersage für Cap Ferret.">
+    <title>Cap Ferret Wetterstation 🌊</title>
+    <meta name="description" content="Aktuelles Wetter und Historie für Cap Ferret.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="background-animation"></div>
     
     <main class="dashboard">
         <header>
-            <a href="../" style="color: white; text-decoration: none; opacity: 0.7; font-size: 0.9rem; margin-bottom: 10px; display: inline-block;">&larr; Zurück</a>
-            <h1>Cap Ferret</h1>
-            <p class="subtitle">Météo en direct</p>
+            <a href="../" style="color: white; text-decoration: none; opacity: 0.7; font-size: 0.9rem; margin-bottom: 10px; display: inline-block;">&larr; Zurück zum Portal</a>
+            <h1>Wetterstation</h1>
+            <p class="subtitle">Cap Ferret Live-Daten</p>
         </header>
 
-        <section class="weather-card glass">
-            <div class="current-weather">
-                <div class="temp-container">
-                    <span id="current-temp" class="temperature">--</span><span class="unit">°C</span>
-                </div>
-                <div class="weather-info">
-                    <p id="weather-desc" class="description">Lade Wetterdaten...</p>
-                    <div class="details">
-                        <div class="detail-item">
-                            <span class="icon">💨</span>
-                            <span id="wind-speed">-- km/h</span>
+        <section class="weather-card">
+            
+            <div class="tabs hidden" id="tabMenu">
+                <button class="tab-btn active" onclick="switchTab('live')" id="btn-live">Live Wetter</button>
+                <button class="tab-btn" onclick="switchTab('archiv')" id="btn-archiv">Archiv</button>
+            </div>
+
+            <div id="loader">Wetterdaten werden geladen...</div>
+
+            <div id="content" class="hidden">
+                
+                <div id="tab-live" class="tab-content active">
+                    <div class="meteo-header">
+                        <div class="location">📍 Cap Ferret Meteo</div>
+                        <div class="timestamp" id="timeUpdated">--:--</div>
+                    </div>
+
+                    <div class="main-temp-container">
+                        <span id="temp" class="main-temp">--</span>
+                        <span class="unit">°C</span>
+                    </div>
+                    
+                    <div class="mini-chart-container">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <span class="stat-emoji">📉</span>
+                            <div class="stat-info">
+                                <span class="stat-label">Min</span>
+                                <span class="stat-data" id="stat-min">--</span>
+                                <span class="stat-time" id="time-min">--:--</span>
+                            </div>
                         </div>
-                        <div class="detail-item">
-                            <span class="icon">💧</span>
-                            <span id="humidity">-- %</span>
+                        <div class="stat-box">
+                            <span class="stat-emoji">📈</span>
+                            <div class="stat-info">
+                                <span class="stat-label">Max</span>
+                                <span class="stat-data" id="stat-max">--</span>
+                                <span class="stat-time" id="time-max">--:--</span>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-emoji">Ø</span>
+                            <div class="stat-info">
+                                <span class="stat-label">Mittel</span>
+                                <span class="stat-data" id="stat-avg">--</span>
+                                <span class="stat-time" style="opacity:0">--:--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="details-grid">
+                        <div class="detail-item" onclick="openDetail('humidity', 'Feuchtigkeit')">
+                            <span class="detail-icon">💧</span>
+                            <span class="detail-label">Feuchtigkeit</span>
+                            <span class="detail-value" id="val-humidity">--</span>
+                        </div>
+                        <div class="detail-item" onclick="openDetail('windSpeed', 'Wind')">
+                            <span class="detail-icon">💨</span>
+                            <span class="detail-label">Wind</span>
+                            <span class="detail-value" id="val-wind">--</span>
+                        </div>
+                        <div class="detail-item" onclick="openDetail('windGust', 'Böen')">
+                            <span class="detail-icon">🌬️</span>
+                            <span class="detail-label">Böen</span>
+                            <span class="detail-value" id="val-gust">--</span>
+                        </div>
+                        <div class="detail-item" onclick="openDetail('windDir', 'Richtung')">
+                            <span class="detail-icon">🧭</span>
+                            <span class="detail-label">Richtung</span>
+                            <span class="detail-value" id="val-windDir">--</span>
+                        </div>
+                        <div class="detail-item" onclick="openDetail('precipRate', 'Regenrate')">
+                            <span class="detail-icon">☔</span>
+                            <span class="detail-label">Regenrate</span>
+                            <span class="detail-value" id="val-rain">--</span>
+                        </div>
+                        <div class="detail-item" onclick="openDetail('uv', 'UV Index')">
+                            <span class="detail-icon">☀️</span>
+                            <span class="detail-label">UV Index</span>
+                            <span class="detail-value" id="val-uv">--</span>
+                        </div>
+                        <div class="detail-item" onclick="openDetail('pressure', 'Luftdruck')">
+                            <span class="detail-icon">⏲️</span>
+                            <span class="detail-label">Luftdruck</span>
+                            <span class="detail-value" id="val-pressure">--</span>
+                        </div>
+                        <div class="detail-item" onclick="openDetail('solar', 'Solar')">
+                            <span class="detail-icon">🔋</span>
+                            <span class="detail-label">Solar</span>
+                            <span class="detail-value" id="val-solar">--</span>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
 
-        <section class="forecast glass">
-            <h2>Nächste Tage</h2>
-            <div class="forecast-container" id="forecast-container">
-                <!-- Forecast items will be injected here by JS -->
+                <div id="tab-archiv" class="tab-content">
+                    <div class="archive-grid" id="archiveContainer">
+                        <!-- Archiv Daten via JS -->
+                    </div>
+                </div>
+
             </div>
         </section>
     </main>
+
+    <div id="modal">
+        <div class="modal-content">
+            <div class="close-btn" onclick="closeModal()">&times;</div>
+            <div class="modal-title" id="modalTitle">Details</div>
+            <div class="chart-wrapper">
+                <canvas id="detailChart"></canvas>
+            </div>
+        </div>
+    </div>
 
     <script src="../js/app.js"></script>
 </body>
