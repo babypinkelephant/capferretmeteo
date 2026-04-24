@@ -30,4 +30,3 @@ jobs:
             --exclude='.github/' \
             --exclude='node_modules/' \
             ./ ${{ secrets.HOSTPOINT_USER }}@${{ secrets.HOSTPOINT_HOST }}:${{ secrets.HOSTPOINT_DEST_DIR }}
-             
