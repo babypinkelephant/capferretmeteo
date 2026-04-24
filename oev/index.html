@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ÖV Monitor Cap Ferret</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            height: 100vh; /* Volle Höhe für Monitor */
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden; /* Kein Scrollen auf Monitor */
+        }
+
+        /* --- Header Bereich --- */
+        #header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Erlaubt Umbruch bei sehr kleinen Screens */
+            gap: 10px;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #e6007e;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            white-space: nowrap;
+        }
+
+        .screen-title a {
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.5;
+            font-size: 1.2rem;
+            margin-right: 15px;
+            vertical-align: middle;
+            transition: opacity 0.3s;
+        }
+        
+        .screen-title a:hover {
+            opacity: 1;
+        }
+
+        .date-display {
+            font-size: 1.1rem;
+            color: #aaa;
+        }
+        
+        #digital-clock {
+            font-size: 3.5rem;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            color: #fff;
+            line-height: 1;
+        }
+
+        /* --- Container für die zwei Stationen --- */
+        #stations-container {
+            display: flex;
+            gap: 30px;
+            flex: 1; /* Nimmt den Restplatz ein */
+            width: 100%;
+        }
+
+        .station-card {
+            flex: 1; /* Beide Karten gleich breit */
+            background-color: #111;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+            min-width: 0; /* Verhindert Flexbox-Overflow Probleme */
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.6rem;
+            color: #ddd;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* --- Tabelle Design --- */
+        .conn-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #333;
+            font-size: 1.5rem;
+        }
+
+        .line-box {
+            background-color: #333;
+            color: #fff;
+            font-weight: bold;
+            padding: 5px 0;
+            width: 55px;
+            min-width: 55px; /* Fixe Breite erzwingen */
+            border-radius: 6px;
+            text-align: center;
+            margin-right: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ZVV Farben Simulation */
+        .line-46 { background-color: #009ee0; } 
+        .line-11 { background-color: #00983a; }
+        .line-32 { background-color: #a3007c; }
+
+        .destination {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .countdown {
+            text-align: right;
+            font-weight: bold;
+            min-width: 80px;
+            color: #4cd964; 
+        }
+
+        .countdown.urgent { color: #ffcc00; } 
+        .countdown.now { color: #ff3b30; animation: pulse 1.5s infinite; } 
+
+        .vehicle-icon { font-size: 1.4rem; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .error { color: #ff3b30; font-size: 1rem; }
+
+        /* ---------------------------------------------------- */
+        /* RESPONSIVE DESIGN (Hier passiert die Magie)          */
+        /* ---------------------------------------------------- */
+        
+        @media (max-width: 800px) {
+            body {
+                height: auto; /* Auf Handy Scrollen erlauben */
+                overflow-y: auto; 
+                padding: 15px;
+            }
+
+            #header {
+                flex-direction: column; /* Titel oben, Uhr darunter */
+                align-items: flex-start;
+            }
+            
+            #digital-clock {
+                font-size: 2.5rem; /* Uhr etwas kleiner */
+                align-self: flex-end; /* Uhr rechtsbündig */
+                margin-top: -30px; /* Layout-Trick um Platz zu sparen */
+            }
+
+            .screen-title {
+                font-size: 1.4rem;
+            }
+
+            #stations-container {
+                flex-direction: column; /* Untereinander statt nebeneinander */
+                gap: 20px;
+            }
+
+            .station-card {
+                width: 100%; /* Volle Breite */
+                box-sizing: border-box;
+            }
+            
+            .conn-row {
+                font-size: 1.3rem; /* Schrift etwas kleiner auf Handy */
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <div class="header-left">
+            <div class="screen-title"><a href="../" title="Zurück zum Dashboard"><i class="fas fa-arrow-left"></i></a> Cap Ferret Fahrplan</div>
+            <div class="date-display" id="date-display">Lade Datum...</div>
+        </div>
+        <div id="digital-clock">00:00:00</div>
+    </div>
+
+    <div id="stations-container">
+        <div class="station-card">
+            <h2>Alte Trotte</h2>
+            <div id="list-trotte">Lade...</div>
+        </div>
+
+        <div class="station-card">
+            <h2>Kempfhofsteig</h2>
+            <div id="list-kempf">Lade...</div>
+        </div>
+    </div>
+
+    <script>
+        // --- KONFIGURATION ---
+        const STATIONS = [
+            { id: '8591039', elementId: 'list-trotte', name: 'Alte Trotte' },   
+            { id: '8591226', elementId: 'list-kempf', name: 'Kempfhofsteig' }
+        ];
+
+        // --- UHRZEIT ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('digital-clock').innerText = now.toLocaleTimeString('de-CH');
+            
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            document.getElementById('date-display').innerText = now.toLocaleDateString('de-DE', options);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- ÖV DATEN ---
+        async function fetchStationData(station) {
+            const container = document.getElementById(station.elementId);
+            const url = `https://transport.opendata.ch/v1/stationboard?id=${station.id}&limit=4`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                let html = '';
+                const now = new Date();
+
+                data.stationboard.forEach(conn => {
+                    let departureTime = new Date(conn.stop.departure);
+                    if(conn.stop.prognosis.departure) {
+                        departureTime = new Date(conn.stop.prognosis.departure);
+                    }
+
+                    const diffMs = departureTime - now;
+                    const diffMins = Math.floor(diffMs / 60000);
+
+                    let timeDisplay = "";
+                    let cssClass = "countdown";
+                    
+                    if (diffMins <= 0) {
+                        cssClass += " now";
+                        if (conn.category === 'TRAM' || conn.category === 'TRM') {
+                            timeDisplay = '<i class="fas fa-train-tram vehicle-icon"></i>'; 
+                        } else {
+                            timeDisplay = '<i class="fas fa-bus vehicle-icon"></i>'; 
+                        }
+                    } else {
+                        timeDisplay = `+${diffMins}'`;
+                        if(diffMins <= 2) cssClass += " urgent"; 
+                    }
+
+                    const lineClass = `line-${conn.number}`; 
+
+                    html += `
+                        <div class="conn-row">
+                            <div class="line-box ${lineClass}">${conn.number}</div>
+                            <div class="destination">${conn.to}</div>
+                            <div class="${cssClass}">${timeDisplay}</div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+
+            } catch (error) {
+                container.innerHTML = `<div class="error">Verbindungsfehler...</div>`;
+            }
+        }
+
+        function updateAllStations() {
+            STATIONS.forEach(station => fetchStationData(station));
+        }
+
+        updateAllStations();
+        setInterval(updateAllStations, 30000); 
+        setInterval(updateAllStations, 5000); // 5 Sek für Zeit-Update
+
+    </script>
+</body>
+</html>

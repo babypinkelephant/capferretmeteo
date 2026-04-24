@@ -3,51 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cap Ferret Meteo 🌊</title>
-    <meta name="description" content="Aktuelles Wetter und Vorhersage für Cap Ferret.">
+    <title>Cap Ferret Portal</title>
+    <meta name="description" content="Portal für Cap Ferret Meteo und ÖV Monitor.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --hover-bg: rgba(255, 255, 255, 0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            color: var(--primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 20px;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 60%);
+            animation: rotate 30s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            animation: fadeIn 1s ease backwards;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            padding: 3rem 2rem;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .card:hover {
+            background: var(--hover-bg);
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px 0 rgba(31, 38, 135, 0.25);
+        }
+
+        .icon-wrapper {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .card p {
+            font-weight: 300;
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2.5rem; }
+            .card { padding: 2rem 1.5rem; }
+        }
+    </style>
 </head>
 <body>
     <div class="background-animation"></div>
     
-    <main class="dashboard">
-        <header>
-            <h1>Cap Ferret</h1>
-            <p class="subtitle">Météo en direct</p>
-        </header>
+    <div class="container">
+        <h1>Cap Ferret</h1>
+        <p class="subtitle">Wähle dein Dashboard</p>
 
-        <section class="weather-card glass">
-            <div class="current-weather">
-                <div class="temp-container">
-                    <span id="current-temp" class="temperature">--</span><span class="unit">°C</span>
-                </div>
-                <div class="weather-info">
-                    <p id="weather-desc" class="description">Lade Wetterdaten...</p>
-                    <div class="details">
-                        <div class="detail-item">
-                            <span class="icon">💨</span>
-                            <span id="wind-speed">-- km/h</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="icon">💧</span>
-                            <span id="humidity">-- %</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <div class="grid">
+            <a href="meteo/" class="card">
+                <div class="icon-wrapper">⛅</div>
+                <h2>Meteo</h2>
+                <p>Live-Wetter und 4-Tage Vorhersage</p>
+            </a>
 
-        <section class="forecast glass">
-            <h2>Nächste Tage</h2>
-            <div class="forecast-container" id="forecast-container">
-                <!-- Forecast items will be injected here by JS -->
-            </div>
-        </section>
-    </main>
-
-    <script src="js/app.js"></script>
+            <a href="oev/" class="card">
+                <div class="icon-wrapper"><i class="fas fa-train-tram"></i></div>
+                <h2>Fahrplan</h2>
+                <p>Abfahrten Alte Trotte & Kempfhofsteig</p>
+            </a>
+        </div>
+    </div>
 </body>
 </html>
