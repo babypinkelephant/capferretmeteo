@@ -134,19 +134,24 @@ export const renderTische = async (container) => {
             return;
         }
 
-        container.innerHTML = menuData.map(item => `
+        container.innerHTML = menuData.map(item => {
+            const itemId = item.id || item.Artikel_ID || item.artikel_id;
+            const itemName = item.name || item.Name;
+            const itemPreis = item.preis || item.Preis;
+            
+            return `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">
                 <div>
-                    <div class="font-bold">${item.name}</div>
-                    <div class="text-muted text-sm">CHF ${parseFloat(item.preis).toFixed(2)}</div>
+                    <div class="font-bold">${itemName}</div>
+                    <div class="text-muted text-sm">CHF ${parseFloat(itemPreis).toFixed(2)}</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <button class="btn qty-btn" data-id="${item.id}" data-action="minus" style="padding: 8px; width: 32px; height: 32px; border-radius: 8px;">-</button>
-                    <span id="qty-${item.id}" style="width: 20px; text-align: center;">0</span>
-                    <button class="btn qty-btn" data-id="${item.id}" data-action="plus" style="padding: 8px; width: 32px; height: 32px; border-radius: 8px;">+</button>
+                    <button class="btn qty-btn" data-id="${itemId}" data-action="minus" style="padding: 8px; width: 32px; height: 32px; border-radius: 8px;">-</button>
+                    <span id="qty-${itemId}" style="width: 20px; text-align: center;">0</span>
+                    <button class="btn qty-btn" data-id="${itemId}" data-action="plus" style="padding: 8px; width: 32px; height: 32px; border-radius: 8px;">+</button>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
 
         container.querySelectorAll('.qty-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -164,8 +169,10 @@ export const renderTische = async (container) => {
         const itemsToOrder = Object.keys(currentCart)
             .filter(id => currentCart[id] > 0)
             .map(id => {
-                const menuItem = menuData.find(m => String(m.id) === String(id));
-                return { id, name: menuItem.name, menge: currentCart[id], preis: menuItem.preis };
+                const menuItem = menuData.find(m => String(m.id || m.Artikel_ID || m.artikel_id) === String(id));
+                const itemName = menuItem.name || menuItem.Name;
+                const itemPreis = menuItem.preis || menuItem.Preis;
+                return { id, name: itemName, menge: currentCart[id], preis: itemPreis };
             });
 
         if (itemsToOrder.length === 0) return;
