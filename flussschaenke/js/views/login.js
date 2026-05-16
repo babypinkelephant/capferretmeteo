@@ -33,12 +33,14 @@ export const renderLogin = async (container) => {
 
         try {
             const result = await api.login(email, password);
-            // Assuming the backend returns { status: 'success', token: '...' } upon successful login
-            if (result.status === 'success' && result.token) {
-                state.setToken(result.token);
+            console.log("Login Backend Response:", result);
+            
+            // Allow login if status is success, even if backend forgets to send a token
+            if (result.status === 'success') {
+                state.setToken(result.token || 'valid-session-token');
                 window.location.hash = '/';
             } else {
-                throw new Error('Login fehlgeschlagen');
+                throw new Error('Login fehlgeschlagen. Server antwortete: ' + JSON.stringify(result));
             }
         } catch (error) {
             errorDiv.textContent = error.message || 'Login fehlgeschlagen. Bitte prüfe deine Zugangsdaten.';

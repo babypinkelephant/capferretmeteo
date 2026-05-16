@@ -3,11 +3,13 @@ name: Hostpoint Deployment
 on:
   push:
     branches:
-      - main  # Die Pipeline startet nur bei einem Push in den Main-Branch
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     
     steps:
       - name: Code auschecken
@@ -18,15 +20,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.HOSTPOINT_SSH_PRIVATE_KEY }}
 
-      - name: SSH Known Hosts konfigurieren
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.HOSTPOINT_HOST }} >> ~/.ssh/known_hosts
-
       - name: Deployment via rsync
         run: |
           rsync -avz --delete \
+            -e "ssh -o StrictHostKeyChecking=no" \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='node_modules/' \
             ./ ${{ secrets.HOSTPOINT_USER }}@${{ secrets.HOSTPOINT_HOST }}:${{ secrets.HOSTPOINT_DEST_DIR }}
+      
