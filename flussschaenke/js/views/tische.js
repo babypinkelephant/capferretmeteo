@@ -166,16 +166,30 @@ export const renderTische = async (container) => {
     };
 
     document.getElementById('submit-order-btn').addEventListener('click', async (e) => {
-        const itemsToOrder = Object.keys(currentCart)
-            .filter(id => currentCart[id] > 0)
-            .map(id => {
-                const menuItem = menuData.find(m => String(m.id || m.Artikel_ID || m.artikel_id) === String(id));
-                const itemName = menuItem.name || menuItem.Name;
-                const itemPreis = menuItem.preis || menuItem.Preis;
-                return { id, name: itemName, menge: currentCart[id], preis: itemPreis };
-            });
+        const activeItems = Object.keys(currentCart).filter(id => currentCart[id] > 0);
+        if (activeItems.length === 0) return;
 
-        if (itemsToOrder.length === 0) return;
+        // Generate Bestell_ID (YYYYMMDD-XXXX)
+        const today = new Date();
+        const dateStr = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+        let counter = parseInt(localStorage.getItem('order_counter_' + dateStr) || '0', 10);
+        counter++;
+        localStorage.setItem('order_counter_' + dateStr, counter);
+        const bestellId = dateStr + '-' + String(counter).padStart(4, '0');
+
+        // Map items to exact sheet columns expected by backend
+        const itemsToOrder = activeItems.map(id => {
+            const menuItem = menuData.find(m => String(m.id || m.Artikel_ID || m.artikel_id) === String(id));
+            const itemName = menuItem.name || menuItem.Name;
+            return { 
+                Bestell_ID: bestellId,
+                Tisch_Nr: currentTisch,
+                Name: itemName,
+                Menge: currentCart[id],
+                Status: 'Offen'
+                // Zeitstempel will be added by backend
+            };
+        });
 
         const btn = e.currentTarget;
         const originalText = btn.innerHTML;
@@ -185,6 +199,8 @@ export const renderTische = async (container) => {
         try {
             await api.placeOrder(currentTisch, itemsToOrder);
             closeSheet();
+            // Optional: alert success or reload orders
+            alert('Bestellung erfolgreich gesendet!');
         } catch (error) {
             alert('Fehler beim Bestellen: ' + error.message);
         } finally {
