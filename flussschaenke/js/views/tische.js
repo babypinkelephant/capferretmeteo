@@ -92,9 +92,13 @@ export const renderTische = async (container) => {
                 menuData = response.data; 
             }
 
-            const ordersResponse = await api.getOrders('Neu,Bestätigt');
+            // Fetch all orders and filter locally because the backend requires exact match
+            const ordersResponse = await api.getOrders();
             const allOrders = ordersResponse.data || [];
-            const tableOrders = allOrders.filter(o => String(o.tisch) === String(tischNummer));
+            const tableOrders = allOrders.filter(o => 
+                String(o.Tisch_Nr || o.tisch) === String(tischNummer) && 
+                (o.Status === 'Neu' || o.Status === 'Bestätigt' || o.status === 'Neu' || o.status === 'Bestätigt')
+            );
 
             renderExistingOrders(tableOrders);
             renderMenu();
@@ -115,12 +119,22 @@ export const renderTische = async (container) => {
         
         let html = '';
         orders.forEach(o => {
-            const statusColor = o.status === 'Bestätigt' ? 'var(--color-success)' : '#fff';
-            const statusBg = o.status === 'Bestätigt' ? 'rgba(48,209,88,0.2)' : 'rgba(255,255,255,0.1)';
+            const orderStatus = o.Status || o.status || 'Unbekannt';
+            const orderMenge = o.Menge || o.menge || 1;
+            const orderArtikelId = o.Artikel_ID || o.artikel;
+            
+            let orderName = orderArtikelId;
+            if (menuData) {
+                const menuItem = menuData.find(m => String(m.id || m.Artikel_ID || m.artikel_id) === String(orderArtikelId));
+                if (menuItem) orderName = menuItem.name || menuItem.Name || orderArtikelId;
+            }
+
+            const statusColor = orderStatus === 'Bestätigt' ? 'var(--color-success)' : '#fff';
+            const statusBg = orderStatus === 'Bestätigt' ? 'rgba(48,209,88,0.2)' : 'rgba(255,255,255,0.1)';
             html += `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
-                    <span>${o.menge}x ${o.artikel}</span>
-                    <span style="font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; background: ${statusBg}; color: ${statusColor};">${o.status}</span>
+                    <span>${orderMenge}x ${orderName}</span>
+                    <span style="font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; background: ${statusBg}; color: ${statusColor};">${orderStatus}</span>
                 </div>
             `;
         });
@@ -169,37 +183,19 @@ export const renderTische = async (container) => {
         const activeItems = Object.keys(currentCart).filter(id => currentCart[id] > 0);
         if (activeItems.length === 0) return;
 
-        // Generate Bestell_ID (YYYYMMDD-XXXX)
-        const today = new Date();
-        const dateStr = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
-        let counter = parseInt(localStorage.getItem('order_counter_' + dateStr) || '0', 10);
-        counter++;
-        localStorage.setItem('order_counter_' + dateStr, counter);
-        const bestellId = dateStr + '-' + String(counter).padStart(4, '0');
-
-        // Map items to exact sheet columns expected by backend
-        const itemsToOrder = activeItems.map(id => {
-            const menuItem = menuData.find(m => String(m.id || m.Artikel_ID || m.artikel_id) === String(id));
-            const itemName = menuItem.name || menuItem.Name;
-            return { 
-                Bestell_ID: bestellId,
-                Tisch_Nr: currentTisch,
-                Name: itemName,
-                Menge: currentCart[id],
-                Status: 'Offen'
-                // Zeitstempel will be added by backend
-            };
-        });
-
         const btn = e.currentTarget;
         const originalText = btn.innerHTML;
         btn.innerHTML = '<span class="loader" style="border-top-color:#000;"></span>';
         btn.disabled = true;
 
         try {
-            await api.placeOrder(currentTisch, itemsToOrder);
+            // Backend addOrder function takes tischNr, artikelId, menge
+            for (const artikelId of activeItems) {
+                const menge = currentCart[artikelId];
+                await api.addOrder(currentTisch, artikelId, menge);
+            }
+            
             closeSheet();
-            // Optional: alert success or reload orders
             alert('Bestellung erfolgreich gesendet!');
         } catch (error) {
             alert('Fehler beim Bestellen: ' + error.message);

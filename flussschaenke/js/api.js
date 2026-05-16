@@ -48,13 +48,13 @@ export const api = {
     getOrders(status) {
         return this.get('getOrders', { status });
     },
-    placeOrder(tisch, items) {
-        return this.post('placeOrder', { tisch, items });
+    addOrder(tischNr, artikelId, menge) {
+        return this.post('addOrder', { tischNr, artikelId, menge });
     },
-    updateOrderStatus(orderId, status) {
-        return this.post('updateOrderStatus', { orderId, status });
+    updateOrderStatus(bestellId, neuerStatus) {
+        return this.post('updateOrderStatus', { bestellId, neuerStatus });
     },
-    checkout(tisch, tip) {
-        return this.post('checkout', { tisch, tip });
+    checkout(tischNr, trinkgeld) {
+        return this.post('checkoutTable', { tischNr, trinkgeld });
     }
 };
