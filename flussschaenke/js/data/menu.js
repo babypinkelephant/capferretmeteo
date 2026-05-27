@@ -1,5 +1,5 @@
 export const menuData = [
-    { Artikel_ID: 1, Name: 'Food', Preis: 15.00, Kategorie: 'Essen' },
+    { Artikel_ID: 1, Name: 'Food', Preis: 95.00, Kategorie: 'Essen' },
     { Artikel_ID: 2, Name: 'Limmapero', Preis: 12.00, Kategorie: 'Getränk' },
     { Artikel_ID: 3, Name: 'Schaum Glas', Preis: 10.00, Kategorie: 'Getränk' },
     { Artikel_ID: 4, Name: 'Schaum Flasche', Preis: 68.00, Kategorie: 'Getränk' },
@@ -20,5 +20,6 @@ export const menuData = [
     { Artikel_ID: 19, Name: 'Quitten 2', Preis: 8.00, Kategorie: 'Getränk' },
     { Artikel_ID: 20, Name: 'Quitten 4', Preis: 15.00, Kategorie: 'Getränk' },
     { Artikel_ID: 21, Name: 'Mirabelle 2', Preis: 8.00, Kategorie: 'Getränk' },
-    { Artikel_ID: 22, Name: 'Mirabelle 4', Preis: 15.00, Kategorie: 'Getränk' }
+    { Artikel_ID: 22, Name: 'Mirabelle 4', Preis: 15.00, Kategorie: 'Getränk' },
+    { Artikel_ID: 23, Name: 'Umarmung', Preis: 1.00, Kategorie: 'Getränk' }
 ];
