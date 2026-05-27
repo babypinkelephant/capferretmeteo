@@ -87,24 +87,25 @@ export const renderTische = async (container) => {
         overlay.classList.add('active');
         sheet.classList.add('active');
 
-        try {
-            // Fetch fresh immediately or use cache
-            await api.fetchOrders();
-            const allOrders = api._orders || [];
-            
-            const tableOrders = allOrders.filter(o => 
+        // Instant Load: Render what we have in cache immediately
+        const allOrders = api._orders || [];
+        const renderTableOrders = (ordersList) => {
+            const tableOrders = ordersList.filter(o => 
                 String(o.Tisch_Nr || o.tisch) === String(tischNummer) && 
                 (o.Status === 'Neu' || o.Status === 'Bestätigt' || o.status === 'Neu' || o.status === 'Bestätigt')
             );
-
             renderExistingOrders(tableOrders);
-            renderMenu();
-        } catch (error) {
-            console.error(error);
-            document.getElementById('existing-orders-list').innerHTML = `<p class="text-danger">Fehler beim Laden.</p>`;
-        } finally {
-            document.getElementById('sheet-loading').classList.add('hidden');
-        }
+        };
+        
+        renderTableOrders(allOrders);
+        renderMenu();
+
+        // Background update
+        api.fetchOrders().then(() => {
+            if (currentTisch === tischNummer) {
+                renderTableOrders(api._orders || []);
+            }
+        });
     };
 
     const renderExistingOrders = (orders) => {
@@ -193,9 +194,10 @@ export const renderTische = async (container) => {
                 const menge = currentCart[artikelId];
                 const menuItem = menuData.find(m => String(m.Artikel_ID) === String(artikelId));
                 const name = menuItem ? menuItem.Name : artikelId;
+                const preis = menuItem ? parseFloat(menuItem.Preis) : 0;
                 const bestellId = `ORD-${timestampStr}-${r}-${artikelId}`;
                 
-                await api.addOrder(bestellId, currentTisch, name, menge, 'Neu');
+                await api.addOrder(bestellId, currentTisch, name, menge, preis, 'Neu');
             }
             
             closeSheet();

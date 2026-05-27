@@ -48,12 +48,13 @@ function doPost(e) {
       
       const timestamp = new Date().toISOString();
       
-      // Aufbau der Zeile: [Bestell_ID, Tisch_Nr, Name, Menge, Status, Zeitstempel]
+      // Aufbau der Zeile: [Bestell_ID, Tisch_Nr, Name, Menge, Preis, Status, Zeitstempel]
       sheet.appendRow([
         data.bestellId,
         data.tischNr,
         data.name,
         data.menge,
+        data.preis || '',
         data.status || 'Neu',
         timestamp
       ]);
@@ -67,8 +68,8 @@ function doPost(e) {
       const rowIdx = findRowIndexByOrderId(sheet, data.bestellId);
       
       if (rowIdx > -1) {
-        // Spalte 5 = Status
-        sheet.getRange(rowIdx, 5).setValue(data.neuerStatus);
+        // Spalte 6 = Status (A=1, B=2, C=3, D=4, E=5 Preis, F=6 Status)
+        sheet.getRange(rowIdx, 6).setValue(data.neuerStatus);
         return outputJSON({ status: 'success' });
       } else {
         return outputJSON({ status: 'error', message: 'Bestellung nicht gefunden' });
@@ -82,9 +83,9 @@ function doPost(e) {
       
       if (rowIdx > -1) {
         if (data.neueMenge === 0) {
-          // Spalte 4 = Menge, Spalte 5 = Status
+          // Spalte 4 = Menge, Spalte 6 = Status
           sheet.getRange(rowIdx, 4).setValue(0);
-          sheet.getRange(rowIdx, 5).setValue('Storniert');
+          sheet.getRange(rowIdx, 6).setValue('Storniert');
         } else {
           sheet.getRange(rowIdx, 4).setValue(data.neueMenge);
         }
@@ -114,6 +115,7 @@ function doPost(e) {
       if (rowIdx > -1) {
         const tischNr = rowData[headers.indexOf('Tisch_Nr')];
         const name = rowData[headers.indexOf('Name')];
+        const preis = rowData[headers.indexOf('Preis')] || '';
         const alteMenge = parseInt(rowData[headers.indexOf('Menge')]);
         
         const mengeZumBezahlen = parseInt(data.mengeZumBezahlen);
@@ -130,12 +132,13 @@ function doPost(e) {
             tischNr,
             name,
             mengeZumBezahlen,
+            preis,
             'Bezahlt',
             new Date().toISOString()
           ]);
         } else {
           // Alles wird bezahlt
-          sheet.getRange(rowIdx, 5).setValue('Bezahlt');
+          sheet.getRange(rowIdx, 6).setValue('Bezahlt');
         }
         return outputJSON({ status: 'success' });
       } else {

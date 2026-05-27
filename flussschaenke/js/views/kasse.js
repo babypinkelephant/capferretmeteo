@@ -224,7 +224,7 @@ export const renderKasse = async (container) => {
                 const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
                 const r = Math.floor(Math.random() * 1000);
                 const tipId = `ORD-${timestampStr}-${r}-TIP`;
-                await api.addOrder(tipId, currentTisch, 'Trinkgeld', 1, 'Bezahlt');
+                await api.addOrder(tipId, currentTisch, 'Trinkgeld', 1, tip, 'Bezahlt');
             }
 
             closeSheet();

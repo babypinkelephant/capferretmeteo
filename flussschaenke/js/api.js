@@ -79,8 +79,8 @@ export const api = {
         // Fallback for direct getOrders call
         return this.get('getOrders', { status });
     },
-    addOrder(bestellId, tischNr, name, menge, status) {
-        return this.post('addOrder', { bestellId, tischNr, name, menge, status });
+    addOrder(bestellId, tischNr, name, menge, preis, status) {
+        return this.post('addOrder', { bestellId, tischNr, name, menge, preis, status });
     },
     updateOrderStatus(bestellId, neuerStatus) {
         return this.post('updateOrderStatus', { bestellId, neuerStatus });
