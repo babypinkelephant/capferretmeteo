@@ -83,11 +83,18 @@ function doPost(e) {
       
       if (rowIdx > -1) {
         if (data.neueMenge === 0) {
-          // Spalte 4 = Menge, Spalte 6 = Status
+          // Spalte 4 = Menge, Spalte 5 = Preis, Spalte 6 = Status
           sheet.getRange(rowIdx, 4).setValue(0);
+          sheet.getRange(rowIdx, 5).setValue(0);
           sheet.getRange(rowIdx, 6).setValue('Storniert');
         } else {
+          // Alten Preis und Menge auslesen, um den Stückpreis zu berechnen
+          const alteMenge = parseInt(sheet.getRange(rowIdx, 4).getValue()) || 1;
+          const alterPreis = parseFloat(sheet.getRange(rowIdx, 5).getValue()) || 0;
+          const unitPrice = alterPreis / alteMenge;
+          
           sheet.getRange(rowIdx, 4).setValue(data.neueMenge);
+          sheet.getRange(rowIdx, 5).setValue(data.neueMenge * unitPrice);
         }
         return outputJSON({ status: 'success' });
       } else {
@@ -115,24 +122,26 @@ function doPost(e) {
       if (rowIdx > -1) {
         const tischNr = rowData[headers.indexOf('Tisch_Nr')];
         const name = rowData[headers.indexOf('Name')];
-        const preis = rowData[headers.indexOf('Preis')] || '';
-        const alteMenge = parseInt(rowData[headers.indexOf('Menge')]);
+        const alterGesamtPreis = parseFloat(rowData[headers.indexOf('Preis')]) || 0;
+        const alteMenge = parseInt(rowData[headers.indexOf('Menge')]) || 1;
+        const unitPrice = alterGesamtPreis / alteMenge;
         
         const mengeZumBezahlen = parseInt(data.mengeZumBezahlen);
         const restMenge = alteMenge - mengeZumBezahlen;
         
         if (restMenge > 0) {
-          // 1. Passe alte Zeile an (Restmenge)
+          // 1. Passe alte Zeile an (Restmenge und Restpreis)
           sheet.getRange(rowIdx, 4).setValue(restMenge);
+          sheet.getRange(rowIdx, 5).setValue(restMenge * unitPrice);
           
-          // 2. Füge neue Zeile ein für den bezahlten Teil
+          // 2. Füge neue Zeile ein für den bezahlten Teil (mit anteiligem Preis)
           const splitId = data.bestellId + "-S" + Math.floor(Math.random()*1000);
           sheet.appendRow([
             splitId,
             tischNr,
             name,
             mengeZumBezahlen,
-            preis,
+            mengeZumBezahlen * unitPrice,
             'Bezahlt',
             new Date().toISOString()
           ]);

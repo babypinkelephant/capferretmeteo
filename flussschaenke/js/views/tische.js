@@ -194,10 +194,11 @@ export const renderTische = async (container) => {
                 const menge = currentCart[artikelId];
                 const menuItem = menuData.find(m => String(m.Artikel_ID) === String(artikelId));
                 const name = menuItem ? menuItem.Name : artikelId;
-                const preis = menuItem ? parseFloat(menuItem.Preis) : 0;
+                const unitPreis = menuItem ? parseFloat(menuItem.Preis) : 0;
+                const totalPreis = menge * unitPreis;
                 const bestellId = `ORD-${timestampStr}-${r}-${artikelId}`;
                 
-                await api.addOrder(bestellId, currentTisch, name, menge, preis, 'Neu');
+                await api.addOrder(bestellId, currentTisch, name, menge, totalPreis, 'Neu');
             }
             
             closeSheet();
