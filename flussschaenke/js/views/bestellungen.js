@@ -1,14 +1,16 @@
 import { api } from '../api.js';
 
 export const renderBestellungen = async (container) => {
+    api.startPolling();
     container.innerHTML = `
         <div id="loading" class="text-center mt-4"><span class="loader"></span></div>
         <div id="bestellungen-list"></div>
     `;
 
     try {
-        const response = await api.getOrders('Neu');
-        const orders = response.data || [];
+        await api.fetchOrders();
+        const allOrders = api._orders || [];
+        const orders = allOrders.filter(o => o.Status === 'Neu' || o.status === 'Neu');
         
         if (orders.length === 0) {
             document.getElementById('bestellungen-list').innerHTML = `<p class="text-center text-muted mt-4">Keine neuen Bestellungen.</p>`;
@@ -25,7 +27,7 @@ export const renderBestellungen = async (container) => {
                     </div>
                     <div style="font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px;">Neu</div>
                 </div>
-                <button class="btn btn-success confirm-btn" data-id="${o.id}">Als Bestätigt markieren</button>
+                <button class="btn btn-success confirm-btn" data-id="${o.id || o.Bestell_ID || o.bestellId}">Als Serviert markieren</button>
             </div>
         `).join('');
 
@@ -41,7 +43,7 @@ export const renderBestellungen = async (container) => {
                 button.disabled = true;
 
                 try {
-                    await api.updateOrderStatus(id, 'Bestätigt');
+                    await api.updateOrderStatus(id, 'Serviert');
                     const orderCard = document.getElementById(`order-${id}`);
                     if(orderCard) {
                         orderCard.remove();

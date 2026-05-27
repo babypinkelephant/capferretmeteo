@@ -38,23 +38,61 @@ export const api = {
         }
     },
 
+    // Polling state
+    _orders: [],
+    _subscribers: [],
+    
+    // Subscribe to order updates
+    onOrdersUpdated(callback) {
+        this._subscribers.push(callback);
+    },
+
+    // Notify all subscribers
+    _notifySubscribers() {
+        this._subscribers.forEach(cb => cb(this._orders));
+    },
+
+    // Start polling every 60 seconds
+    startPolling() {
+        if (this._pollingInterval) return;
+        this.fetchOrders(); // initial fetch
+        this._pollingInterval = setInterval(() => {
+            this.fetchOrders();
+        }, 60000); // every minute
+    },
+
+    async fetchOrders() {
+        try {
+            const res = await this.get('getOrders');
+            this._orders = res.data || [];
+            this._notifySubscribers();
+        } catch (error) {
+            console.error('Polling error:', error);
+        }
+    },
+
     // Specific endpoints
     login(email, password) {
         return this.post('login', { email, password });
     },
-    getMenu() {
-        return this.get('getMenu');
-    },
     getOrders(status) {
+        // Fallback for direct getOrders call
         return this.get('getOrders', { status });
     },
-    addOrder(tischNr, artikelId, menge) {
-        return this.post('addOrder', { tischNr, artikelId, menge });
+    addOrder(bestellId, tischNr, name, menge, status) {
+        return this.post('addOrder', { bestellId, tischNr, name, menge, status });
     },
     updateOrderStatus(bestellId, neuerStatus) {
         return this.post('updateOrderStatus', { bestellId, neuerStatus });
     },
+    updateOrderMenge(bestellId, neueMenge) {
+        return this.post('updateOrderMenge', { bestellId, neueMenge });
+    },
+    splitOrder(bestellId, mengeZumBezahlen) {
+        return this.post('splitOrder', { bestellId, mengeZumBezahlen });
+    },
     checkout(tischNr, trinkgeld) {
+        // Will be deprecated in frontend by splitOrder, but keeping it just in case
         return this.post('checkoutTable', { tischNr, trinkgeld });
     }
 };

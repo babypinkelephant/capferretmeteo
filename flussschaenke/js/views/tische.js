@@ -1,6 +1,8 @@
 import { api } from '../api.js';
+import { menuData } from '../data/menu.js';
 
 export const renderTische = async (container) => {
+    api.startPolling();
     container.innerHTML = `
         <div class="grid-2" id="tische-grid">
             <!-- Tische injected here -->
@@ -56,7 +58,6 @@ export const renderTische = async (container) => {
     const closeBtn = document.getElementById('sheet-close');
     
     let currentTisch = null;
-    let menuData = null;
     let currentCart = {}; // item.id -> quantity
 
     const closeSheet = () => {
@@ -87,14 +88,10 @@ export const renderTische = async (container) => {
         sheet.classList.add('active');
 
         try {
-            if (!menuData) {
-                const response = await api.getMenu();
-                menuData = response.data; 
-            }
-
-            // Fetch all orders and filter locally because the backend requires exact match
-            const ordersResponse = await api.getOrders();
-            const allOrders = ordersResponse.data || [];
+            // Fetch fresh immediately or use cache
+            await api.fetchOrders();
+            const allOrders = api._orders || [];
+            
             const tableOrders = allOrders.filter(o => 
                 String(o.Tisch_Nr || o.tisch) === String(tischNummer) && 
                 (o.Status === 'Neu' || o.Status === 'Bestätigt' || o.status === 'Neu' || o.status === 'Bestätigt')
@@ -189,10 +186,16 @@ export const renderTische = async (container) => {
         btn.disabled = true;
 
         try {
-            // Backend addOrder function takes tischNr, artikelId, menge
+            const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+            const r = Math.floor(Math.random() * 1000);
+            
             for (const artikelId of activeItems) {
                 const menge = currentCart[artikelId];
-                await api.addOrder(currentTisch, artikelId, menge);
+                const menuItem = menuData.find(m => String(m.Artikel_ID) === String(artikelId));
+                const name = menuItem ? menuItem.Name : artikelId;
+                const bestellId = `ORD-${timestampStr}-${r}-${artikelId}`;
+                
+                await api.addOrder(bestellId, currentTisch, name, menge, 'Neu');
             }
             
             closeSheet();
