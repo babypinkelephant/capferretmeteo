@@ -22,8 +22,8 @@ export const renderBestellungen = async (container) => {
             <div class="card mb-3" id="order-${o.id}">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                     <div>
-                        <div class="font-bold" style="font-size: 1.2rem;">${o.menge}x ${o.artikel}</div>
-                        <div class="text-muted">Tisch ${o.tisch}</div>
+                        <div class="font-bold" style="font-size: 1.2rem;">${o.Menge || o.menge}x ${o.Name || o.name || o.artikel}</div>
+                        <div class="text-muted">Tisch ${o.Tisch_Nr || o.tisch}</div>
                     </div>
                     <div style="font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px;">Neu</div>
                 </div>
