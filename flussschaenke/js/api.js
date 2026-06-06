@@ -58,7 +58,7 @@ export const api = {
         this.fetchOrders(); // initial fetch
         this._pollingInterval = setInterval(() => {
             this.fetchOrders();
-        }, 60000); // every minute
+        }, 5000); // every 5 seconds
     },
 
     async fetchOrders() {
@@ -79,17 +79,25 @@ export const api = {
         // Fallback for direct getOrders call
         return this.get('getOrders', { status });
     },
-    addOrder(bestellId, tischNr, name, menge, preis, status) {
-        return this.post('addOrder', { bestellId, tischNr, name, menge, preis, status });
+    async addOrder(bestellId, tischNr, name, menge, preis, status) {
+        const res = await this.post('addOrder', { bestellId, tischNr, name, menge, preis, status });
+        this.fetchOrders();
+        return res;
     },
-    updateOrderStatus(bestellId, neuerStatus) {
-        return this.post('updateOrderStatus', { bestellId, neuerStatus });
+    async updateOrderStatus(bestellId, neuerStatus) {
+        const res = await this.post('updateOrderStatus', { bestellId, neuerStatus });
+        this.fetchOrders();
+        return res;
     },
-    updateOrderMenge(bestellId, neueMenge) {
-        return this.post('updateOrderMenge', { bestellId, neueMenge });
+    async updateOrderMenge(bestellId, neueMenge) {
+        const res = await this.post('updateOrderMenge', { bestellId, neueMenge });
+        this.fetchOrders();
+        return res;
     },
-    splitOrder(bestellId, mengeZumBezahlen) {
-        return this.post('splitOrder', { bestellId, mengeZumBezahlen });
+    async splitOrder(bestellId, mengeZumBezahlen) {
+        const res = await this.post('splitOrder', { bestellId, mengeZumBezahlen });
+        this.fetchOrders();
+        return res;
     },
     checkout(tischNr, trinkgeld) {
         // Will be deprecated in frontend by splitOrder, but keeping it just in case
