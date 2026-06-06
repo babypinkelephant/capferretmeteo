@@ -21,5 +21,5 @@ export const menuData = [
     { Artikel_ID: 20, Name: 'Quitten 4', Preis: 15.00, Kategorie: 'Getränk' },
     { Artikel_ID: 21, Name: 'Mirabelle 2', Preis: 8.00, Kategorie: 'Getränk' },
     { Artikel_ID: 22, Name: 'Mirabelle 4', Preis: 15.00, Kategorie: 'Getränk' },
-    { Artikel_ID: 23, Name: 'Umarmung', Preis: 1.00, Kategorie: 'Getränk' }
+    { Artikel_ID: 23, Name: 'Andrin-Spritz', Preis: 12.00, Kategorie: 'Getränk' }
 ];
