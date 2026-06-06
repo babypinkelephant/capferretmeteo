@@ -20,19 +20,19 @@ export const renderTische = async (container) => {
             <div class="bottom-sheet-content">
                 <div id="sheet-loading" class="text-center mb-3 hidden"><span class="loader"></span></div>
                 
-                <div id="existing-orders" class="mb-4">
-                    <h4 class="mb-2 text-muted">Bisherige Bestellungen</h4>
-                    <div id="existing-orders-list">Keine offenen Bestellungen.</div>
-                </div>
-                
-                <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 24px;">
-                
                 <div id="new-order" class="mb-4">
                     <h4 class="mb-2 text-muted">Neue Artikel hinzufügen</h4>
                     <div id="menu-list" class="mb-3">
                         <!-- Menu items injected here -->
                     </div>
-                    <button class="btn btn-success" id="submit-order-btn">Bestellen</button>
+                    <button class="btn btn-success" id="submit-order-btn" style="margin-bottom: 24px;">Bestellen</button>
+                </div>
+                
+                <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 24px;">
+                
+                <div id="existing-orders" class="mb-4">
+                    <h4 class="mb-2 text-muted">Bisherige Bestellungen</h4>
+                    <div id="existing-orders-list">Keine offenen Bestellungen.</div>
                 </div>
             </div>
         </div>
@@ -90,10 +90,11 @@ export const renderTische = async (container) => {
         // Instant Load: Render what we have in cache immediately
         const allOrders = api._orders || [];
         const renderTableOrders = (ordersList) => {
-            const tableOrders = ordersList.filter(o => 
-                String(o.Tisch_Nr || o.tisch) === String(tischNummer) && 
-                (o.Status === 'Neu' || o.Status === 'Bestätigt' || o.status === 'Neu' || o.status === 'Bestätigt')
-            );
+            const tableOrders = ordersList.filter(o => {
+                const status = o.Status || o.status || '';
+                return String(o.Tisch_Nr || o.tisch) === String(tischNummer) && 
+                       (status === 'Neu' || status === 'Serviert' || status === 'Bezahlt');
+            });
             renderExistingOrders(tableOrders);
         };
         
@@ -119,16 +120,19 @@ export const renderTische = async (container) => {
         orders.forEach(o => {
             const orderStatus = o.Status || o.status || 'Unbekannt';
             const orderMenge = o.Menge || o.menge || 1;
-            const orderArtikelId = o.Artikel_ID || o.artikel;
+            const orderName = o.Name || o.name || 'Unbekannt';
+
+            let statusColor = '#fff';
+            let statusBg = 'rgba(255,255,255,0.1)';
             
-            let orderName = orderArtikelId;
-            if (menuData) {
-                const menuItem = menuData.find(m => String(m.id || m.Artikel_ID || m.artikel_id) === String(orderArtikelId));
-                if (menuItem) orderName = menuItem.name || menuItem.Name || orderArtikelId;
+            if (orderStatus === 'Serviert') {
+                statusColor = 'var(--color-warning)';
+                statusBg = 'rgba(255,159,10,0.2)';
+            } else if (orderStatus === 'Bezahlt') {
+                statusColor = 'var(--color-success)';
+                statusBg = 'rgba(48,209,88,0.2)';
             }
 
-            const statusColor = orderStatus === 'Bestätigt' ? 'var(--color-success)' : '#fff';
-            const statusBg = orderStatus === 'Bestätigt' ? 'rgba(48,209,88,0.2)' : 'rgba(255,255,255,0.1)';
             html += `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
                     <span>${orderMenge}x ${orderName}</span>
