@@ -80,21 +80,46 @@ export const api = {
         return this.get('getOrders', { status });
     },
     async addOrder(bestellId, tischNr, name, menge, preis, status) {
+        // Optimistic update
+        this._orders.push({ Bestell_ID: bestellId, Tisch_Nr: tischNr, Name: name, Menge: menge, Preis: preis, Status: status });
+        this._notifySubscribers();
         const res = await this.post('addOrder', { bestellId, tischNr, name, menge, preis, status });
         this.fetchOrders();
         return res;
     },
     async updateOrderStatus(bestellId, neuerStatus) {
+        const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
+        if (order) { order.Status = neuerStatus; this._notifySubscribers(); }
         const res = await this.post('updateOrderStatus', { bestellId, neuerStatus });
         this.fetchOrders();
         return res;
     },
     async updateOrderMenge(bestellId, neueMenge) {
+        const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
+        if (order) {
+            if (neueMenge === 0) { order.Menge = 0; order.Status = 'Storniert'; } 
+            else { order.Menge = neueMenge; }
+            this._notifySubscribers();
+        }
         const res = await this.post('updateOrderMenge', { bestellId, neueMenge });
         this.fetchOrders();
         return res;
     },
     async splitOrder(bestellId, mengeZumBezahlen) {
+        const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
+        if (order) {
+            const oldMenge = parseInt(order.Menge) || 1;
+            const bezahlMenge = parseInt(mengeZumBezahlen) || 1;
+            order.Menge = Math.max(0, oldMenge - bezahlMenge);
+            this._orders.push({
+                Bestell_ID: bestellId + '-S',
+                Tisch_Nr: order.Tisch_Nr,
+                Name: order.Name,
+                Menge: bezahlMenge,
+                Status: 'Bezahlt'
+            });
+            this._notifySubscribers();
+        }
         const res = await this.post('splitOrder', { bestellId, mengeZumBezahlen });
         this.fetchOrders();
         return res;

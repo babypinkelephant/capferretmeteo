@@ -67,14 +67,7 @@ export const renderTische = async (container) => {
         currentCart = {};
     };
 
-    overlay.addEventListener('click', closeSheet);
     closeBtn.addEventListener('click', closeSheet);
-
-    let startY = 0;
-    sheet.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
-    sheet.addEventListener('touchend', e => {
-        if (e.changedTouches[0].clientY - startY > 50) closeSheet();
-    });
 
     const openSheet = async (tischNummer) => {
         currentTisch = tischNummer;

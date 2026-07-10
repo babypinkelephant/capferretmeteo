@@ -34,51 +34,56 @@ export const renderKasse = async (container) => {
     `;
 
     let allOrders = [];
+    let currentTisch = null;
+    let currentTableOrders = [];
 
-    const loadData = async () => {
-        try {
-            await api.fetchOrders();
-            allOrders = api._orders || [];
-            
-            const activeOrders = allOrders.filter(o => o.Status === 'Neu' || o.Status === 'Serviert' || o.status === 'Neu' || o.status === 'Serviert');
-            const activeTables = [...new Set(activeOrders.map(o => o.Tisch_Nr || o.tisch))];
-            
-            const grid = document.getElementById('kasse-tische-grid');
-            if (activeTables.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1 / -1;"><p class="text-center text-muted">Keine abzurechnenden Tische.</p></div>';
-            } else {
-                grid.innerHTML = '';
-                activeTables.forEach(tisch => {
-                    const card = document.createElement('div');
-                    card.className = 'card text-center';
-                    card.style.height = '100px';
-                    card.style.display = 'flex';
-                    card.style.flexDirection = 'column';
-                    card.style.justifyContent = 'center';
-                    card.style.alignItems = 'center';
-                    card.style.cursor = 'pointer';
-                    card.innerHTML = `<span class="large-amount">${tisch}</span><span class="text-muted">Tisch</span>`;
-                    card.addEventListener('click', () => openCheckoutSheet(tisch));
-                    grid.appendChild(card);
-                });
-            }
-            
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('kasse-content').classList.remove('hidden');
+    const renderList = (newOrders) => {
+        allOrders = newOrders || [];
+        
+        const activeOrders = allOrders.filter(o => o.Status === 'Neu' || o.Status === 'Serviert' || o.status === 'Neu' || o.status === 'Serviert');
+        const activeTables = [...new Set(activeOrders.map(o => o.Tisch_Nr || o.tisch))];
+        
+        const grid = document.getElementById('kasse-tische-grid');
+        if (!grid) return;
 
-        } catch (error) {
-            document.getElementById('loading').classList.add('hidden');
-            container.innerHTML += `<p class="text-center text-danger">Fehler beim Laden.</p>`;
+        if (activeTables.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1 / -1;"><p class="text-center text-muted">Keine abzurechnenden Tische.</p></div>';
+        } else {
+            grid.innerHTML = '';
+            activeTables.forEach(tisch => {
+                const card = document.createElement('div');
+                card.className = 'card text-center';
+                card.style.height = '100px';
+                card.style.display = 'flex';
+                card.style.flexDirection = 'column';
+                card.style.justifyContent = 'center';
+                card.style.alignItems = 'center';
+                card.style.cursor = 'pointer';
+                card.innerHTML = `<span class="large-amount">${tisch}</span><span class="text-muted">Tisch</span>`;
+                card.addEventListener('click', () => openCheckoutSheet(tisch));
+                grid.appendChild(card);
+            });
+        }
+        
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('kasse-content').classList.remove('hidden');
+
+        if (currentTisch !== null && document.getElementById('checkout-overlay').classList.contains('active')) {
+            renderSheetItems();
         }
     };
 
-    loadData();
+    renderList(api._orders || []);
+
+    api.onOrdersUpdated((newOrders) => {
+        renderList(newOrders);
+    });
+
+    api.fetchOrders().catch(e => console.error(e));
 
     const overlay = document.getElementById('checkout-overlay');
     const sheet = document.getElementById('checkout-sheet');
     const closeBtn = document.getElementById('checkout-close');
-    let currentTisch = null;
-    let currentTableOrders = [];
 
     const closeSheet = () => {
         overlay.classList.remove('active');
@@ -86,7 +91,6 @@ export const renderKasse = async (container) => {
         currentTisch = null;
     };
 
-    overlay.addEventListener('click', closeSheet);
     closeBtn.addEventListener('click', closeSheet);
 
     const calcTotal = () => {
