@@ -90,9 +90,10 @@ export const api = {
     /**
      * Neue Reservation erstellen
      */
-    async createReservation(datum, hauptEmail, gaeste) {
+    async createReservation(datum, hauptNachname, hauptEmail, gaeste) {
         return await this.post('createReservation', {
             datum,
+            hauptNachname,
             hauptEmail,
             gaeste
         });

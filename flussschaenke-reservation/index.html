@@ -23,9 +23,9 @@
                 <div class="brand-icon">
                     <svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg>
                 </div>
-                <div class="brand-text">
-                    <h1>Flussschänke</h1>
-                    <span>Zürich · Limmatufer</span>
+                <div class="section-title">
+                    <h2>Kontaktdaten & Gästeangaben</h2>
+                    <p>Hauptbucher und Infos zu allen Gästen</p>
                 </div>
             </a>
             <button class="btn btn-secondary" id="btn-open-manage" style="padding: 10px 18px; font-size: 0.9rem;">
@@ -55,13 +55,7 @@
                     <div class="hero-info-label">Veranstaltungsdaten</div>
                     <div class="hero-info-val">November 2026</div>
                 </div>
-                <div class="hero-info-card">
-                    <div class="hero-info-icon">
-                        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                    </div>
-                    <div class="hero-info-label">Kapazität</div>
-                    <div class="hero-info-val">Max. 30 Plätze / Abend</div>
-                </div>
+                <!-- Kapazität entfernt gemäss Anforderung -->
                 <div class="hero-info-card">
                     <div class="hero-info-icon">
                         <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
@@ -91,9 +85,9 @@
                 <div class="section-header">
                     <div class="section-number">1</div>
                     <div class="section-title">
-                        <h2>Veranstaltungsdatum wählen</h2>
-                        <p>Wähle deinen gewünschten Abend im November 2026 (Live-Verfügbarkeit)</p>
-                    </div>
+                    <h2>Datum wählen</h2>
+                    <p>Wähle deinen Abend im November 2026</p>
+                </div>
                 </div>
 
                 <div class="dates-grid" id="dates-container">
@@ -105,9 +99,9 @@
                     <div class="section-header">
                         <div class="section-number">2</div>
                         <div class="section-title">
-                            <h2>Anzahl Plätze reservieren</h2>
-                            <p>Für wie viele Personen möchtest du reservieren am <strong id="selected-date-display" style="color: var(--primary);"></strong>?</p>
-                        </div>
+                    <h2>Anzahl Plätze</h2>
+                    <p id="guest-count-subtitle">Für wie viele Personen möchtest du reservieren?</p>
+                </div>
                     </div>
 
                     <div class="guest-selector-wrapper">
@@ -184,9 +178,16 @@
                     <!-- Overbooking / Fehler Alert -->
                     <div class="alert alert-danger hidden" id="booking-error-alert"></div>
 
+                    <div style="margin: 20px 0; font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: flex-start; gap: 10px;">
+                        <input type="checkbox" id="agb-checkbox" style="width: 20px; height: 20px; margin-top: 2px;" required>
+                        <label for="agb-checkbox" style="font-weight: normal; font-size: 0.85rem; line-height: 1.4; color: var(--text-main);">
+                            Ich akzeptiere die Bedingungen (CHF 93 pro Person, wovon CHF 50 als Anzahlung via Twint innert 48h nach dieser Reservation fällig werden). Bei Stornierung kürzer als 48h vor Start wird die Anzahlung verrechnet.
+                        </label>
+                    </div>
+
                     <!-- Submit Button -->
                     <button type="submit" class="btn btn-primary btn-block" id="btn-submit-booking" style="font-size: 1.1rem; padding: 18px;">
-                        Reservation jetzt verbindlich abschliessen
+                        Reservation abschicken
                     </button>
                 </div>
 
@@ -198,10 +199,15 @@
             <div class="success-icon">
                 <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </div>
-            <h2 style="font-size: 2.2rem; color: var(--accent-river); margin-bottom: 8px;">Reservation erfolgreich!</h2>
+            <h2 style="font-size: 2.2rem; color: var(--accent-river); margin-bottom: 8px;">Reservation notiert!</h2>
             <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 24px auto;">
-                Wir haben deine Plätze verbindlich reserviert. Eine Bestätigungs-E-Mail wurde an <strong id="success-email"></strong> gesendet.
+                Wir haben deine Plätze reserviert. Eine Bestätigungs-E-Mail wurde an <strong id="success-email"></strong> gesendet. Twinte eure Anzahlung innert 48 Stunden. Sobald wir sie bestätigen, bist du bei uns fix auf der Liste.
             </p>
+
+            <div style="margin: 30px auto; max-width: 250px;">
+                <p style="font-weight: 600; margin-bottom: 10px;">Anzahlung per Twint (CHF 50 / Person)</p>
+                <img src="img/twint.png" alt="Twint QR Code" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color);">
+            </div>
 
             <div class="booking-id-box">
                 <div class="text-muted" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Deine persönliche Booking-ID</div>
@@ -222,12 +228,46 @@
             </div>
 
             <div class="alert alert-success" style="max-width: 650px; margin: 0 auto 32px auto; text-align: left;">
-                <strong>Wichtiger Hinweis:</strong> Du kannst deine Gästedaten sowie Allergien jederzeit mit deiner Haupt-E-Mail und deiner Booking-ID auf dieser Website anpassen.
+                <strong>Wichtiger Hinweis:</strong> Du kannst deine Gästedaten sowie Allergien jederzeit mit deiner Haupt-E-Mail und deiner Booking-ID unter "Reservation verwalten" anpassen.
             </div>
 
             <button type="button" class="btn btn-primary" onclick="window.location.reload();">
                 Zurück zur Startseite
             </button>
+        </div>
+
+        <div style="margin-top: 60px;">
+            <div class="section-title">
+                <h2>Das erwartet dich:</h2>
+            </div>
+            <div style="background: var(--bg-card); padding: 30px; border-radius: var(--radius-md); box-shadow: var(--shadow-soft); margin-bottom: 30px;">
+                <h3 style="color: var(--primary-dark); margin-bottom: 10px;">Züri meets Leventina</h3>
+                <p><strong>Acht Gang Degustations Menu</strong></p>
+                <p>Freue dich auf eine kulinarische Reise vom See auf die Alp in den Stall und über die Hochwildjagd zurück zum Fluss. Alles lokal, alles saisonal – aus Zürich und der Leventina.<br>
+                (Vegi Option verfügbar – bitte anmelden.)</p>
+            </div>
+
+            <div class="section-title">
+                <h2>Das musst du wissen:</h2>
+            </div>
+            <div style="background: var(--bg-card); padding: 30px; border-radius: var(--radius-md); box-shadow: var(--shadow-soft); margin-bottom: 30px;">
+                <p>93 Franken/Person (Pre-Pay 50 Franken via Twint nach der Reservation innert 48 Stunden). Inkl. Züri-Wasser. Exkl. andere Getränke, diese kannst du bequem vor Ort via Twint bezahlen.</p>
+            </div>
+
+            <div class="section-title">
+                <h2>Wo:</h2>
+            </div>
+            <div style="background: var(--bg-card); padding: 30px; border-radius: var(--radius-md); box-shadow: var(--shadow-soft); margin-bottom: 30px;">
+                <p><a href="https://limmatelier.ch" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: none;">limmatelier.ch</a><br>
+                Hönggerstrasse 45a, 8037 Zürich</p>
+            </div>
+
+            <div class="section-title">
+                <h2>Kleingedrucktes:</h2>
+            </div>
+            <div style="background: var(--bg-card-subtle); padding: 30px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 30px; font-size: 0.9rem;">
+                <p>Sobald die Reservation von uns bestätigt ist, kannst du bis 48h vorher kostenlos stornieren. Bei Absagen kürzer als 48h vor Start verrechnen wir aus Planungs- und Anti-Food-Waste-Gründen die Anzahlung.</p>
+            </div>
         </div>
 
     </main>
@@ -270,6 +310,7 @@
                 <div style="background: var(--accent-gold-light); padding: 16px; border-radius: var(--radius-md); margin-bottom: 20px; border: 1px solid var(--border-accent);">
                     <div style="font-weight: 700; color: var(--primary-dark);">Booking-ID: <span id="manage-booking-id"></span></div>
                     <div style="font-size: 0.9rem; color: var(--text-muted);">Datum: <strong id="manage-date"></strong></div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 4px;">Status Bezahlung: <strong id="manage-payment-status"></strong></div>
                 </div>
 
                 <form id="form-manage-update">

@@ -363,6 +363,12 @@ async function handleReservationSubmit(e) {
         });
     }
 
+    const agbCheckbox = document.getElementById('agb-checkbox');
+    if (agbCheckbox && !agbCheckbox.checked) {
+        alert('Bitte akzeptiere die Bedingungen zur Anzahlung, um fortzufahren.');
+        return;
+    }
+
     // Submit-Button in Loading State versetzen
     const btnSubmit = document.getElementById('btn-submit-booking');
     const originalText = btnSubmit.innerHTML;
@@ -370,7 +376,7 @@ async function handleReservationSubmit(e) {
     btnSubmit.innerHTML = `<span class="spinner"></span> Reservation wird verarbeitet...`;
 
     try {
-        const res = await api.createReservation(selectedDate, hauptEmail, gaeste);
+        const res = await api.createReservation(selectedDate, hauptNachname, hauptEmail, gaeste);
 
         if (res.status === 'success') {
             showSuccessView(res.bookingId, selectedDate, hauptEmail, gaeste);
@@ -470,6 +476,17 @@ function renderManageView(res) {
 
     document.getElementById('manage-booking-id').textContent = res.bookingId;
     document.getElementById('manage-date').textContent = formatDateCH(res.datum);
+    
+    const paymentStatusEl = document.getElementById('manage-payment-status');
+    if (paymentStatusEl && res.paymentInfo) {
+        if (res.paymentInfo.isFullyPaid) {
+            paymentStatusEl.innerHTML = `<span style="color: var(--status-success-text); font-weight: 700;">✅ Bezahlt (${res.paymentInfo.totalPaid} von ${res.gaeste.length})</span>`;
+        } else if (res.paymentInfo.totalPaid > 0) {
+            paymentStatusEl.innerHTML = `<span style="color: var(--status-warning-text); font-weight: 700;">⏳ Teilweise (${res.paymentInfo.totalPaid} von ${res.gaeste.length} bezahlt)</span>`;
+        } else {
+            paymentStatusEl.innerHTML = `<span style="color: var(--status-danger-text); font-weight: 700;">❌ Offen (Nicht bezahlt)</span>`;
+        }
+    }
 
     const container = document.getElementById('manage-guests-container');
     container.innerHTML = res.gaeste.map((g, idx) => `
