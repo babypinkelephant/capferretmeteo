@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flussschänke Zürich – Herbst-Reservationen</title>
+    <meta name="description" content="Sichere dir deinen Platz im herbstlichen Pop-up Restaurant an der Limmat in Zürich. 8 exklusive Abende im November 2026.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <!-- Site Header -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="#" class="brand-logo">
+                <div class="brand-icon">🍂</div>
+                <div class="brand-text">
+                    <h1>Flussschänke</h1>
+                    <span>Zürich · Limmatufer</span>
+                </div>
+            </a>
+            <button class="btn btn-secondary" id="btn-open-manage" style="padding: 10px 18px; font-size: 0.9rem;">
+                ✏️ Reservation verwalten
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-bg-shapes"></div>
+        <div class="container hero-content">
+            <div class="hero-badge">
+                ✨ Herbst-Pop-up 2026
+            </div>
+            <h1 class="hero-title">Kulinarische Herbstabende an der Limmat</h1>
+            <p class="hero-subtitle">
+                Erlebe ein exklusives Mehrgang-Menü in gemütlicher Atmosphäre am Zürcher Limmatufer. 
+                Es stehen nur 30 Plätze pro Abend bereit.
+            </p>
+
+            <div class="hero-info-grid">
+                <div class="hero-info-card">
+                    <div class="hero-info-icon">📅</div>
+                    <div class="hero-info-label">Veranstaltungsdaten</div>
+                    <div class="hero-info-val">November 2026</div>
+                </div>
+                <div class="hero-info-card">
+                    <div class="hero-info-icon">👥</div>
+                    <div class="hero-info-label">Kapazität</div>
+                    <div class="hero-info-val">Max. 30 Plätze / Abend</div>
+                </div>
+                <div class="hero-info-card">
+                    <div class="hero-info-icon">🕒</div>
+                    <div class="hero-info-label">Zeiten</div>
+                    <div class="hero-info-val">Eintreffen 18h | Start 19h</div>
+                </div>
+                <div class="hero-info-card">
+                    <div class="hero-info-icon">📍</div>
+                    <div class="hero-info-label">Location</div>
+                    <div class="hero-info-val">Limmatufer, Zürich</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content / Form Area -->
+    <main class="container main-content">
+        
+        <!-- Formularbereich -->
+        <div class="booking-card" id="booking-form-wrapper">
+            <form id="reservation-form">
+
+                <!-- Schritt 1: Datum wählen -->
+                <div class="section-header">
+                    <div class="section-number">1</div>
+                    <div class="section-title">
+                        <h2>Veranstaltungsdatum wählen</h2>
+                        <p>Wähle deinen gewünschten Abend im November 2026 (Live-Verfügbarkeit)</p>
+                    </div>
+                </div>
+
+                <div class="dates-grid" id="dates-container">
+                    <!-- Datums-Karten werden via JS gerendert -->
+                </div>
+
+                <!-- Schritt 2: Personenanzahl wählen (Versteckt bis Datum gewählt) -->
+                <div id="booking-step-2" class="hidden">
+                    <div class="section-header">
+                        <div class="section-number">2</div>
+                        <div class="section-title">
+                            <h2>Anzahl Plätze reservieren</h2>
+                            <p>Für wie viele Personen möchtest du reservieren am <strong id="selected-date-display" style="color: var(--primary);"></strong>?</p>
+                        </div>
+                    </div>
+
+                    <div class="guest-selector-wrapper">
+                        <div>
+                            <div style="font-weight: 700; color: var(--accent-river); font-size: 1.1rem;">Anzahl Plätze</div>
+                            <div class="text-muted" style="font-size: 0.85rem;">Maximal 10 Plätze pro Buchung online</div>
+                        </div>
+
+                        <div class="guest-counter">
+                            <button type="button" class="btn-counter" id="btn-minus">−</button>
+                            <span class="counter-value" id="counter-val">2</span>
+                            <button type="button" class="btn-counter" id="btn-plus">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schritt 3: Kontaktdaten & Gäste (Versteckt bis Datum gewählt) -->
+                <div id="booking-step-3" class="hidden">
+                    <div class="section-header">
+                        <div class="section-number">3</div>
+                        <div class="section-title">
+                            <h2>Kontaktdaten & Gästelistangaben</h2>
+                            <p>Gib bitte die Kontaktdaten und individuelle Allergien/Ernährungsformen an</p>
+                        </div>
+                    </div>
+
+                    <!-- Hauptkontakt -->
+                    <div style="background: var(--bg-card-subtle); padding: 24px; border-radius: var(--radius-md); margin-bottom: 28px; border: 1px solid var(--border-accent);">
+                        <h3 style="font-size: 1.2rem; color: var(--accent-river); margin-bottom: 16px;">Buchende Person (Hauptkontakt)</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="haupt-vorname">Vorname *</label>
+                                <input type="text" id="haupt-vorname" placeholder="z. B. Marc" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="haupt-nachname">Nachname *</label>
+                                <input type="text" id="haupt-nachname" placeholder="z. B. Meier" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="haupt-email">Haupt-E-Mail *</label>
+                                <input type="email" id="haupt-email" placeholder="marc.meier@beispiel.ch" required>
+                                <div class="text-muted" style="font-size: 0.75rem; margin-top: 4px;">An diese E-Mail senden wir die Buchungsbestätigung & Booking-ID.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamische Gästeliste -->
+                    <h3 style="font-size: 1.2rem; color: var(--accent-river); margin-bottom: 16px;">Gästeangaben & Allergien pro Platz</h3>
+                    <div id="guests-container">
+                        <!-- Gästekarten werden via JS dynamisch erzeugt -->
+                    </div>
+
+                    <!-- Zusammenfassungs-Box -->
+                    <div class="summary-box">
+                        <h3 style="margin-top: 0; color: var(--primary-dark); font-size: 1.2rem; margin-bottom: 16px;">Übersicht deiner Buchung</h3>
+                        <div class="summary-row">
+                            <span>Datum:</span>
+                            <strong id="sum-date">-</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Zeiten:</span>
+                            <strong>Eintreffen ab 18:00 Uhr | Menüstart 19:00 Uhr</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Anzahl Plätze:</span>
+                            <strong id="sum-seats">2 Plätze</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Ort:</span>
+                            <strong>Flussschänke am Limmatufer, Zürich</strong>
+                        </div>
+                    </div>
+
+                    <!-- Overbooking / Fehler Alert -->
+                    <div class="alert alert-danger hidden" id="booking-error-alert"></div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary btn-block" id="btn-submit-booking" style="font-size: 1.1rem; padding: 18px;">
+                        ✨ Reservation jetzt verbindlich abschliessen
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Erfolgs-Ansicht (Standardmässig versteckt) -->
+        <div class="booking-card success-card hidden" id="booking-success-view">
+            <div class="success-icon">✓</div>
+            <h2 style="font-size: 2.2rem; color: var(--accent-river); margin-bottom: 8px;">Reservation erfolgreich!</h2>
+            <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 24px auto;">
+                Wir haben deine Plätze verbindlich reserviert. Eine Bestätigungs-E-Mail wurde an <strong id="success-email"></strong> gesendet.
+            </p>
+
+            <div class="booking-id-box">
+                <div class="text-muted" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Deine persönliche Booking-ID</div>
+                <div class="booking-id-val" id="success-booking-id">RES-20261104-XXXX</div>
+                <button type="button" class="btn btn-secondary" id="btn-copy-id" style="margin-top: 10px; padding: 6px 14px; font-size: 0.85rem;">
+                    📋 Booking-ID kopieren
+                </button>
+            </div>
+
+            <div style="background: var(--bg-card-subtle); padding: 24px; border-radius: var(--radius-md); text-align: left; max-width: 650px; margin: 0 auto 32px auto; border: 1px solid var(--border-color);">
+                <h3 style="color: #B84A17; margin-top: 0; margin-bottom: 14px;">Buchungsdetails</h3>
+                <p><strong>Datum:</strong> <span id="success-date"></span></p>
+                <p><strong>Zeiten:</strong> Eintreffen ab 18:00 Uhr | Menüstart 19:00 Uhr</p>
+                <p><strong>Reservierte Plätze:</strong> <span id="success-seats"></span></p>
+                
+                <h4 style="margin-top: 20px; margin-bottom: 10px; color: var(--accent-river);">Erfasste Gästeliste & Präferenzen:</h4>
+                <div id="success-guest-list"></div>
+            </div>
+
+            <div class="alert alert-success" style="max-width: 650px; margin: 0 auto 32px auto; text-align: left;">
+                ℹ️ <strong>Wichtiger Hinweis:</strong> Du kannst deine Gästedaten sowie Allergien jederzeit mit deiner Haupt-E-Mail und deiner Booking-ID auf dieser Website anpassen.
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="window.location.reload();">
+                Zurück zur Startseite
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Modal: Reservation verwalten -->
+    <div class="modal-overlay" id="modal-manage">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="margin: 0; color: var(--accent-river);">Bestehende Reservation verwalten</h3>
+                <button type="button" class="btn-close" id="btn-close-manage">✕</button>
+            </div>
+
+            <!-- Schritt A: Suche -->
+            <div id="lookup-step">
+                <p class="text-muted mb-4">
+                    Gib deine Haupt-E-Mail-Adresse und deine Booking-ID ein, um deine Reservation aufzurufen und Angaben anzupassen.
+                </p>
+
+                <form id="form-lookup">
+                    <div class="form-group">
+                        <label for="lookup-email">Haupt-E-Mail-Adresse *</label>
+                        <input type="email" id="lookup-email" placeholder="deine.email@beispiel.ch" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lookup-id">Booking-ID *</label>
+                        <input type="text" id="lookup-id" placeholder="z. B. RES-20261104-1234" required>
+                    </div>
+
+                    <div class="alert alert-danger hidden" id="lookup-alert"></div>
+
+                    <button type="submit" class="btn btn-primary btn-block" id="btn-submit-lookup">
+                        🔍 Reservation suchen
+                    </button>
+                </form>
+            </div>
+
+            <!-- Schritt B: Bearbeiten -->
+            <div id="manage-edit-step" class="hidden">
+                <div style="background: var(--accent-gold-light); padding: 16px; border-radius: var(--radius-md); margin-bottom: 20px; border: 1px solid var(--border-accent);">
+                    <div style="font-weight: 700; color: var(--primary-dark);">Booking-ID: <span id="manage-booking-id"></span></div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted);">Datum: <strong id="manage-date"></strong></div>
+                </div>
+
+                <form id="form-manage-update">
+                    <div id="manage-guests-container">
+                        <!-- Gästekarten zur Bearbeitung -->
+                    </div>
+
+                    <div class="alert alert-danger hidden" id="manage-alert"></div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 24px;">
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('manage-edit-step').classList.add('hidden'); document.getElementById('lookup-step').classList.remove('hidden');">
+                            Zurück
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="btn-submit-update" style="flex: 1;">
+                            💾 Änderungen speichern
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
