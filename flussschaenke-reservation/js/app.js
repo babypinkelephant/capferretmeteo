@@ -347,7 +347,12 @@ async function handleReservationSubmit(e) {
 // ============================================================
 
 function showSuccessView(bookingId, isoDate, email, gaeste) {
+    // Formular-Bereich und Hero-Section ausblenden
     document.getElementById('booking-form-wrapper')?.classList.add('hidden');
+    document.querySelector('.hero-section')?.classList.add('hidden');
+    document.querySelector('.info-sections')?.classList.add('hidden');
+
+    // Erfolgs-Ansicht direkt unter Header anzeigen
     const sv = document.getElementById('booking-success-view');
     sv?.classList.remove('hidden');
 

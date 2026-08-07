@@ -34,6 +34,51 @@
         </div>
     </header>
 
+    <!-- Erfolgs-Ansicht (direkt unter Header, initial versteckt) -->
+    <div class="success-fullpage hidden" id="booking-success-view">
+        <div class="container" style="max-width: 720px; padding: 40px 20px;">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <h2 style="font-size: 2.2rem; color: var(--accent-river); margin-bottom: 8px;">Reservation notiert!</h2>
+            <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 24px auto;">
+                Wir haben deine Plätze reserviert. Eine Bestätigungs-E-Mail wurde an <strong id="success-email"></strong> gesendet. Twinte eure Anzahlung innert 48 Stunden. Sobald wir sie bestätigen, bist du bei uns fix auf der Liste.
+            </p>
+
+            <div class="booking-id-box">
+                <div class="text-muted" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Deine persönliche Booking-ID</div>
+                <div class="booking-id-val" id="success-booking-id">RES-20261104-XXXX</div>
+                <button type="button" class="btn btn-secondary" id="btn-copy-id" style="margin-top: 10px; padding: 6px 14px; font-size: 0.85rem;">
+                    Booking-ID kopieren
+                </button>
+            </div>
+
+            <!-- Twint QR -->
+            <div style="margin: 30px auto; max-width: 240px; text-align: center;">
+                <p style="font-weight: 600; margin-bottom: 10px; color: var(--text-main);">Anzahlung per Twint (CHF 50 / Person)</p>
+                <img src="img/twint.png" alt="Twint QR Code" style="width: 100%; height: auto; border-radius: 12px; border: 2px solid var(--border-color);">
+            </div>
+
+            <div style="background: var(--bg-card-subtle); padding: 24px; border-radius: var(--radius-md); text-align: left; max-width: 650px; margin: 0 auto 32px auto; border: 1px solid var(--border-color);">
+                <h3 style="color: var(--primary-dark); margin-top: 0; margin-bottom: 14px;">Buchungsdetails</h3>
+                <p><strong>Datum:</strong> <span id="success-date"></span></p>
+                <p><strong>Zeiten:</strong> Eintreffen ab 18:00 Uhr | Menüstart 19:00 Uhr</p>
+                <p><strong>Reservierte Plätze:</strong> <span id="success-seats"></span></p>
+                
+                <h4 style="margin-top: 20px; margin-bottom: 10px; color: var(--accent-river);">Erfasste Gästeliste &amp; Präferenzen:</h4>
+                <div id="success-guest-list"></div>
+            </div>
+
+            <div class="alert alert-success" style="max-width: 650px; margin: 0 auto 32px auto; text-align: left;">
+                <strong>Wichtiger Hinweis:</strong> Du kannst deine Gästedaten sowie Allergien jederzeit mit deiner Haupt-E-Mail und deiner Booking-ID unter "Reservation verwalten" anpassen.
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="window.location.reload();">
+                Zurück zur Startseite
+            </button>
+        </div>
+    </div>
+
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="hero-bg-shapes"></div>
@@ -225,48 +270,7 @@
             </form>
         </div>
 
-        <!-- Erfolgs-Ansicht -->
-        <div class="booking-card success-card hidden" id="booking-success-view">
-            <div class="success-icon">
-                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-            <h2 style="font-size: 2.2rem; color: var(--accent-river); margin-bottom: 8px;">Reservation notiert!</h2>
-            <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 24px auto;">
-                Wir haben deine Plätze reserviert. Eine Bestätigungs-E-Mail wurde an <strong id="success-email"></strong> gesendet. Twinte eure Anzahlung innert 48 Stunden. Sobald wir sie bestätigen, bist du bei uns fix auf der Liste.
-            </p>
-
-            <div class="booking-id-box">
-                <div class="text-muted" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Deine persönliche Booking-ID</div>
-                <div class="booking-id-val" id="success-booking-id">RES-20261104-XXXX</div>
-                <button type="button" class="btn btn-secondary" id="btn-copy-id" style="margin-top: 10px; padding: 6px 14px; font-size: 0.85rem;">
-                    Booking-ID kopieren
-                </button>
-            </div>
-
-            <!-- Twint QR -->
-            <div style="margin: 30px auto; max-width: 240px; text-align: center;">
-                <p style="font-weight: 600; margin-bottom: 10px; color: var(--text-main);">Anzahlung per Twint (CHF 50 / Person)</p>
-                <img src="img/twint.png" alt="Twint QR Code" style="width: 100%; height: auto; border-radius: 12px; border: 2px solid var(--border-color);">
-            </div>
-
-            <div style="background: var(--bg-card-subtle); padding: 24px; border-radius: var(--radius-md); text-align: left; max-width: 650px; margin: 0 auto 32px auto; border: 1px solid var(--border-color);">
-                <h3 style="color: var(--primary-dark); margin-top: 0; margin-bottom: 14px;">Buchungsdetails</h3>
-                <p><strong>Datum:</strong> <span id="success-date"></span></p>
-                <p><strong>Zeiten:</strong> Eintreffen ab 18:00 Uhr | Menüstart 19:00 Uhr</p>
-                <p><strong>Reservierte Plätze:</strong> <span id="success-seats"></span></p>
-                
-                <h4 style="margin-top: 20px; margin-bottom: 10px; color: var(--accent-river);">Erfasste Gästeliste &amp; Präferenzen:</h4>
-                <div id="success-guest-list"></div>
-            </div>
-
-            <div class="alert alert-success" style="max-width: 650px; margin: 0 auto 32px auto; text-align: left;">
-                <strong>Wichtiger Hinweis:</strong> Du kannst deine Gästedaten sowie Allergien jederzeit mit deiner Haupt-E-Mail und deiner Booking-ID unter "Reservation verwalten" anpassen.
-            </div>
-
-            <button type="button" class="btn btn-primary" onclick="window.location.reload();">
-                Zurück zur Startseite
-            </button>
-        </div>
+        <!-- Erfolgs-Ansicht wurde nach oben (direkt unter Header) verschoben -->
 
     </main>
 

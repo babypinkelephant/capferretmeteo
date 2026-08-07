@@ -18,10 +18,11 @@ export const api = {
         try {
             const res = await fetch(API_URL, {
                 method: 'POST',
+                redirect: 'follow',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action, ...payload })
             });
-            if (!res.ok) throw new Error('Netzwerkfehler');
+            if (!res.ok) throw new Error(`Netzwerkfehler (${res.status})`);
             return await res.json();
         } catch (err) {
             console.error(`API POST [${action}]:`, err);

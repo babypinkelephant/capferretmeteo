@@ -616,6 +616,13 @@ input:focus, select:focus, textarea:focus {
     padding: 40px 20px;
 }
 
+.success-fullpage {
+    background: var(--bg-main, #FDFBF7);
+    min-height: calc(100vh - 70px);
+    text-align: center;
+    padding-bottom: 60px;
+}
+
 .success-icon {
     width: 68px;
     height: 68px;
