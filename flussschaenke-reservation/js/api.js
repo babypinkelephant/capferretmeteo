@@ -8,7 +8,7 @@
  */
 
 // Deine Google Apps Script Web-App URL (nach neuem Deployment hier eintragen)
-const API_URL = 'https://script.google.com/macros/s/AKfycbxtoK8ionjY8vBh7qsUqwlederP3H2LMWV926FhisRfu307sI6z8qUglglXXkGJu0kBzA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzKSQikJNqhx2Y0goObe4ARybjKeqLMPZAB8AD51VU21MkH4Z3crKwXpP4jtCRQTI6ThA/exec';
 
 export const api = {
     /**
