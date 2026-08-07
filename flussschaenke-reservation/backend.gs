@@ -76,19 +76,11 @@ function doGet(e) {
     const action = (e.parameter && e.parameter.action) ? e.parameter.action : 'getAvailability';
 
     if (action === 'getAvailability') {
-      // Cache-First: blitzschnell
-      const cache = CacheService.getScriptCache();
-      const cached = cache.get(CACHE_KEY);
-      
-      let availability;
-      if (cached) {
-        availability = JSON.parse(cached);
-      } else {
-        // Cache ist leer (nach Deploy oder Cache-Ablauf) -> direkt rechnen und cachen
-        availability = computeAvailabilityFromSheet();
-        cache.put(CACHE_KEY, JSON.stringify(availability), CACHE_TTL);
-      }
-      return outputJSON({ status: 'success', data: availability, source: cached ? 'cache' : 'sheet' });
+      // Immer frisch aus dem Sheet lesen (kein veralteter Cache)
+      const availability = computeAvailabilityFromSheet();
+      // Cache trotzdem befüllen, damit createReservation-Invalidierung konsistent bleibt
+      CacheService.getScriptCache().put(CACHE_KEY, JSON.stringify(availability), CACHE_TTL);
+      return outputJSON({ status: 'success', data: availability, source: 'sheet' });
     }
 
     if (action === 'lookupBooking') {

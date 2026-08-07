@@ -66,13 +66,16 @@ function renderDateCards() {
 }
 
 function updateDateCardsAvailability() {
+    const MAX_SEATS = 30;
     EVENT_DATES.forEach(d => {
         const card = document.getElementById(`date-card-${d.iso}`);
         const badge = document.getElementById(`badge-${d.iso}`);
         if (!card || !badge) return;
 
-        const info = availabilityData[d.iso] || { available: 30, booked: 0 };
-        const avail = info.available;
+        const info = availabilityData[d.iso];
+        // Immer explizit aus 'booked' berechnen – nie blind dem 'available'-Feld vertrauen
+        const booked = info?.booked ?? 0;
+        const avail = Math.max(0, MAX_SEATS - booked);
 
         if (avail <= 0) {
             card.classList.add('disabled');
@@ -101,8 +104,10 @@ function updateDateCardsAvailability() {
 // ============================================================
 
 function selectDate(isoDate) {
-    const info = availabilityData[isoDate] || { available: 30 };
-    if (info.available <= 0) return;
+    const info = availabilityData[isoDate];
+    const booked = info?.booked ?? 0;
+    const avail = Math.max(0, 30 - booked);
+    if (avail <= 0) return;
 
     selectedDate = isoDate;
 
@@ -110,7 +115,7 @@ function selectDate(isoDate) {
         document.getElementById(`date-card-${d.iso}`)?.classList.toggle('selected', d.iso === isoDate);
     });
 
-    const maxSeats = Math.min(10, info.available);
+    const maxSeats = Math.min(10, avail);
     if (guestCount > maxSeats) guestCount = Math.max(1, maxSeats);
 
     document.getElementById('counter-val').textContent = guestCount;
