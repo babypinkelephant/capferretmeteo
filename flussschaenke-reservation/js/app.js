@@ -253,7 +253,7 @@ function updateGuestFormCards() {
             <div class="guest-card">
                 <div class="guest-card-header">
                     <div class="guest-card-title">
-                        <span>👤 Gast ${i + 1}</span>
+                        <span>Gast ${i + 1}</span>
                         ${isHaupt ? '<span style="font-size: 0.75rem; background: var(--accent-gold-light); color: var(--primary-dark); padding: 2px 8px; border-radius: 12px;">Hauptbucher</span>' : ''}
                     </div>
                 </div>

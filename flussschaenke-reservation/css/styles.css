@@ -1,40 +1,40 @@
 /* ==========================================================================
    Flussschänke Zürich - Herbst-Reservationen Design System
-   Aesthetic: Warm, inviting, autumnal, cheerful with Limmat river touches.
+   Aesthetic: Warm, inviting, autumnal pastel tones.
    ========================================================================== */
 
 :root {
-    --bg-page: #FAF6F0;
+    --bg-page: #FDFBF7;
     --bg-card: #FFFFFF;
-    --bg-card-subtle: #F6EFE7;
-    --bg-hero: linear-gradient(135deg, #1A2F3B 0%, #254456 100%);
+    --bg-card-subtle: #F9F6F0;
+    --bg-hero: #F4EBE1;
     
-    --primary: #D96B27;
-    --primary-hover: #C25A1A;
-    --primary-dark: #B84A17;
+    --primary: #D4A373;
+    --primary-hover: #C69363;
+    --primary-dark: #B58356;
     
-    --accent-gold: #F7A038;
-    --accent-gold-light: #FFF4E5;
-    --accent-river: #1A2F3B;
-    --accent-teal: #2C5266;
+    --accent-gold: #E9C46A;
+    --accent-gold-light: #FDF9EE;
+    --accent-river: #8FA4A9;
+    --accent-teal: #A3B1B6;
     
-    --text-main: #2C2520;
-    --text-muted: #6E6259;
-    --text-light: #FAF6F0;
+    --text-main: #4A4036;
+    --text-muted: #8C7E72;
+    --text-light: #4A4036;
     
-    --border-color: #EBE3D8;
-    --border-accent: #E5C3A6;
+    --border-color: #EAE3DA;
+    --border-accent: #E1D5C6;
     
-    --status-success-bg: #E6F4EA;
-    --status-success-text: #137333;
-    --status-warning-bg: #FEF7E0;
-    --status-warning-text: #B06000;
-    --status-danger-bg: #FCE8E6;
-    --status-danger-text: #C5221F;
+    --status-success-bg: #EAF4EA;
+    --status-success-text: #457B52;
+    --status-warning-bg: #FDF5E6;
+    --status-warning-text: #B58356;
+    --status-danger-bg: #FBEAEA;
+    --status-danger-text: #B85B5B;
     
-    --shadow-soft: 0 10px 30px rgba(44, 37, 32, 0.05);
-    --shadow-medium: 0 14px 40px rgba(44, 37, 32, 0.1);
-    --shadow-hover: 0 20px 45px rgba(217, 107, 39, 0.15);
+    --shadow-soft: 0 10px 30px rgba(74, 64, 54, 0.04);
+    --shadow-medium: 0 14px 40px rgba(74, 64, 54, 0.08);
+    --shadow-hover: 0 20px 45px rgba(212, 163, 115, 0.15);
     
     --radius-sm: 8px;
     --radius-md: 14px;
@@ -76,7 +76,7 @@ h1, h2, h3, .font-serif {
 
 /* Top Header Bar */
 .site-header {
-    background: rgba(255, 253, 249, 0.9);
+    background: rgba(253, 251, 247, 0.9);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
@@ -103,14 +103,18 @@ h1, h2, h3, .font-serif {
 .brand-icon {
     width: 42px;
     height: 42px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-gold) 100%);
+    background: var(--bg-hero);
+    border: 1px solid var(--border-accent);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 20px;
-    box-shadow: 0 4px 12px rgba(217, 107, 39, 0.3);
+}
+
+.brand-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--primary-dark);
 }
 
 .brand-text h1 {
@@ -118,12 +122,12 @@ h1, h2, h3, .font-serif {
     font-weight: 700;
     margin: 0;
     line-height: 1.1;
-    color: var(--accent-river);
+    color: var(--text-main);
 }
 
 .brand-text span {
     font-size: 0.8rem;
-    color: var(--primary);
+    color: var(--primary-dark);
     font-weight: 600;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -132,7 +136,7 @@ h1, h2, h3, .font-serif {
 /* Hero Section */
 .hero-section {
     background: var(--bg-hero);
-    color: var(--text-light);
+    color: var(--text-main);
     padding: 60px 0 70px 0;
     position: relative;
     overflow: hidden;
@@ -144,8 +148,8 @@ h1, h2, h3, .font-serif {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background-image: 
-        radial-gradient(circle at 10% 20%, rgba(247, 160, 56, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(217, 107, 39, 0.2) 0%, transparent 50%);
+        radial-gradient(circle at 10% 20%, rgba(233, 196, 106, 0.2) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(212, 163, 115, 0.2) 0%, transparent 50%);
     pointer-events: none;
 }
 
@@ -161,9 +165,9 @@ h1, h2, h3, .font-serif {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(247, 160, 56, 0.2);
-    border: 1px solid rgba(247, 160, 56, 0.4);
-    color: var(--accent-gold);
+    background: rgba(212, 163, 115, 0.15);
+    border: 1px solid rgba(212, 163, 115, 0.3);
+    color: var(--primary-dark);
     padding: 6px 16px;
     border-radius: 30px;
     font-size: 0.85rem;
@@ -176,12 +180,12 @@ h1, h2, h3, .font-serif {
     font-weight: 700;
     line-height: 1.15;
     margin-bottom: 16px;
-    color: #FFF;
+    color: var(--text-main);
 }
 
 .hero-subtitle {
     font-size: 1.15rem;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--text-muted);
     margin-bottom: 36px;
     font-weight: 300;
 }
@@ -195,10 +199,10 @@ h1, h2, h3, .font-serif {
 }
 
 .hero-info-card {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.8);
     border-radius: var(--radius-md);
     padding: 16px;
     text-align: center;
@@ -207,18 +211,24 @@ h1, h2, h3, .font-serif {
 
 .hero-info-card:hover {
     transform: translateY(-3px);
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.8);
 }
 
 .hero-info-icon {
-    font-size: 1.5rem;
-    margin-bottom: 6px;
-    color: var(--accent-gold);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: center;
+}
+
+.hero-info-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--primary);
 }
 
 .hero-info-label {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -226,7 +236,7 @@ h1, h2, h3, .font-serif {
 .hero-info-val {
     font-size: 0.95rem;
     font-weight: 600;
-    color: #FFF;
+    color: var(--text-main);
 }
 
 /* Main Content Area */
@@ -255,8 +265,9 @@ h1, h2, h3, .font-serif {
 .section-number {
     width: 36px;
     height: 36px;
-    background: var(--accent-gold-light);
-    color: var(--primary);
+    background: var(--bg-hero);
+    color: var(--primary-dark);
+    border: 1px solid var(--border-accent);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -267,7 +278,7 @@ h1, h2, h3, .font-serif {
 
 .section-title h2 {
     font-size: 1.5rem;
-    color: var(--accent-river);
+    color: var(--text-main);
     margin: 0;
 }
 
@@ -315,7 +326,7 @@ h1, h2, h3, .font-serif {
 .date-card.disabled {
     opacity: 0.55;
     cursor: not-allowed;
-    filter: grayscale(0.6);
+    filter: grayscale(0.3);
 }
 
 .date-day {
@@ -329,7 +340,7 @@ h1, h2, h3, .font-serif {
 .date-number {
     font-size: 1.4rem;
     font-weight: 700;
-    color: var(--accent-river);
+    color: var(--text-main);
     margin: 4px 0 8px 0;
 }
 
@@ -408,7 +419,7 @@ h1, h2, h3, .font-serif {
     font-weight: 700;
     min-width: 40px;
     text-align: center;
-    color: var(--accent-river);
+    color: var(--text-main);
 }
 
 /* Form Controls */
@@ -448,12 +459,12 @@ textarea {
 
 input:focus, select:focus, textarea:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(217, 107, 39, 0.12);
+    box-shadow: 0 0 0 4px rgba(212, 163, 115, 0.12);
 }
 
 /* Dynamic Guest Cards */
 .guest-card {
-    background: #FFFDF9;
+    background: #FFF;
     border: 1px solid var(--border-accent);
     border-radius: var(--radius-md);
     padding: 20px;
@@ -497,19 +508,20 @@ input:focus, select:focus, textarea:focus {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: var(--primary);
     color: #FFF;
-    box-shadow: 0 6px 20px rgba(217, 107, 39, 0.3);
+    box-shadow: 0 6px 20px rgba(212, 163, 115, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(217, 107, 39, 0.4);
+    background: var(--primary-hover);
+    box-shadow: 0 10px 25px rgba(212, 163, 115, 0.3);
 }
 
 .btn-secondary {
     background: var(--bg-card-subtle);
-    color: var(--accent-river);
+    color: var(--text-main);
     border: 1px solid var(--border-color);
 }
 
@@ -542,18 +554,18 @@ input:focus, select:focus, textarea:focus {
 .alert-danger {
     background: var(--status-danger-bg);
     color: var(--status-danger-text);
-    border: 1px solid rgba(197, 34, 31, 0.3);
+    border: 1px solid rgba(184, 91, 91, 0.2);
 }
 
 .alert-success {
     background: var(--status-success-bg);
     color: var(--status-success-text);
-    border: 1px solid rgba(19, 115, 51, 0.3);
+    border: 1px solid rgba(69, 123, 82, 0.2);
 }
 
 /* Summary Box */
 .summary-box {
-    background: var(--accent-gold-light);
+    background: var(--bg-hero);
     border: 1px solid var(--border-accent);
     border-radius: var(--radius-md);
     padding: 24px;
@@ -564,7 +576,7 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     justify-content: space-between;
     padding: 8px 0;
-    border-bottom: 1px dashed rgba(217, 107, 39, 0.2);
+    border-bottom: 1px dashed rgba(212, 163, 115, 0.3);
 }
 
 .summary-row:last-child {
@@ -590,6 +602,12 @@ input:focus, select:focus, textarea:focus {
     margin: 0 auto 20px auto;
 }
 
+.success-icon svg {
+    width: 36px;
+    height: 36px;
+    fill: currentColor;
+}
+
 .booking-id-box {
     background: var(--bg-card-subtle);
     border: 2px dashed var(--primary);
@@ -611,7 +629,7 @@ input:focus, select:focus, textarea:focus {
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(15, 29, 36, 0.7);
+    background: rgba(74, 64, 54, 0.6);
     backdrop-filter: blur(8px);
     z-index: 200;
     display: flex;

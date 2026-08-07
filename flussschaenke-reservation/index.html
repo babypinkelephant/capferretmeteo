@@ -20,14 +20,16 @@
     <header class="site-header">
         <div class="container header-inner">
             <a href="#" class="brand-logo">
-                <div class="brand-icon">🍂</div>
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg>
+                </div>
                 <div class="brand-text">
                     <h1>Flussschänke</h1>
                     <span>Zürich · Limmatufer</span>
                 </div>
             </a>
             <button class="btn btn-secondary" id="btn-open-manage" style="padding: 10px 18px; font-size: 0.9rem;">
-                ✏️ Reservation verwalten
+                Reservation verwalten
             </button>
         </div>
     </header>
@@ -37,7 +39,7 @@
         <div class="hero-bg-shapes"></div>
         <div class="container hero-content">
             <div class="hero-badge">
-                ✨ Herbst-Pop-up 2026
+                Herbst-Pop-up 2026
             </div>
             <h1 class="hero-title">Kulinarische Herbstabende an der Limmat</h1>
             <p class="hero-subtitle">
@@ -47,22 +49,30 @@
 
             <div class="hero-info-grid">
                 <div class="hero-info-card">
-                    <div class="hero-info-icon">📅</div>
+                    <div class="hero-info-icon">
+                        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z"/></svg>
+                    </div>
                     <div class="hero-info-label">Veranstaltungsdaten</div>
                     <div class="hero-info-val">November 2026</div>
                 </div>
                 <div class="hero-info-card">
-                    <div class="hero-info-icon">👥</div>
+                    <div class="hero-info-icon">
+                        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
                     <div class="hero-info-label">Kapazität</div>
                     <div class="hero-info-val">Max. 30 Plätze / Abend</div>
                 </div>
                 <div class="hero-info-card">
-                    <div class="hero-info-icon">🕒</div>
+                    <div class="hero-info-icon">
+                        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    </div>
                     <div class="hero-info-label">Zeiten</div>
                     <div class="hero-info-val">Eintreffen 18h | Start 19h</div>
                 </div>
                 <div class="hero-info-card">
-                    <div class="hero-info-icon">📍</div>
+                    <div class="hero-info-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    </div>
                     <div class="hero-info-label">Location</div>
                     <div class="hero-info-val">Limmatufer, Zürich</div>
                 </div>
@@ -176,7 +186,7 @@
 
                     <!-- Submit Button -->
                     <button type="submit" class="btn btn-primary btn-block" id="btn-submit-booking" style="font-size: 1.1rem; padding: 18px;">
-                        ✨ Reservation jetzt verbindlich abschliessen
+                        Reservation jetzt verbindlich abschliessen
                     </button>
                 </div>
 
@@ -185,7 +195,9 @@
 
         <!-- Erfolgs-Ansicht (Standardmässig versteckt) -->
         <div class="booking-card success-card hidden" id="booking-success-view">
-            <div class="success-icon">✓</div>
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
             <h2 style="font-size: 2.2rem; color: var(--accent-river); margin-bottom: 8px;">Reservation erfolgreich!</h2>
             <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 24px auto;">
                 Wir haben deine Plätze verbindlich reserviert. Eine Bestätigungs-E-Mail wurde an <strong id="success-email"></strong> gesendet.
@@ -195,7 +207,7 @@
                 <div class="text-muted" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Deine persönliche Booking-ID</div>
                 <div class="booking-id-val" id="success-booking-id">RES-20261104-XXXX</div>
                 <button type="button" class="btn btn-secondary" id="btn-copy-id" style="margin-top: 10px; padding: 6px 14px; font-size: 0.85rem;">
-                    📋 Booking-ID kopieren
+                    Booking-ID kopieren
                 </button>
             </div>
 
@@ -210,7 +222,7 @@
             </div>
 
             <div class="alert alert-success" style="max-width: 650px; margin: 0 auto 32px auto; text-align: left;">
-                ℹ️ <strong>Wichtiger Hinweis:</strong> Du kannst deine Gästedaten sowie Allergien jederzeit mit deiner Haupt-E-Mail und deiner Booking-ID auf dieser Website anpassen.
+                <strong>Wichtiger Hinweis:</strong> Du kannst deine Gästedaten sowie Allergien jederzeit mit deiner Haupt-E-Mail und deiner Booking-ID auf dieser Website anpassen.
             </div>
 
             <button type="button" class="btn btn-primary" onclick="window.location.reload();">
@@ -248,7 +260,7 @@
                     <div class="alert alert-danger hidden" id="lookup-alert"></div>
 
                     <button type="submit" class="btn btn-primary btn-block" id="btn-submit-lookup">
-                        🔍 Reservation suchen
+                        Reservation suchen
                     </button>
                 </form>
             </div>
@@ -272,7 +284,7 @@
                             Zurück
                         </button>
                         <button type="submit" class="btn btn-primary" id="btn-submit-update" style="flex: 1;">
-                            💾 Änderungen speichern
+                            Änderungen speichern
                         </button>
                     </div>
                 </form>
