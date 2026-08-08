@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbzDLcjAifuAuJh73XBqLJBSPpgg0VonHuetLaQL05Um5zCfWJD-XtVWD0Ucmec9VHwnCQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzKSQikJNqhx2Y0goObe4ARybjKeqLMPZAB8AD51VU21MkH4Z3crKwXpP4jtCRQTI6ThA/exec';
 
 export const api = {
     async post(action, payload = {}) {
@@ -24,7 +24,7 @@ export const api = {
             const url = new URL(API_URL);
             url.searchParams.append('action', action);
             Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-            
+
             const response = await fetch(url.toString(), {
                 method: 'GET'
             });
@@ -41,7 +41,7 @@ export const api = {
     // Polling state
     _orders: [],
     _subscribers: [],
-    
+
     // Subscribe to order updates
     onOrdersUpdated(callback) {
         this._subscribers.push(callback);
@@ -97,7 +97,7 @@ export const api = {
     async updateOrderMenge(bestellId, neueMenge) {
         const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
         if (order) {
-            if (neueMenge === 0) { order.Menge = 0; order.Status = 'Storniert'; } 
+            if (neueMenge === 0) { order.Menge = 0; order.Status = 'Storniert'; }
             else { order.Menge = neueMenge; }
             this._notifySubscribers();
         }
@@ -127,5 +127,18 @@ export const api = {
     checkout(tischNr, trinkgeld) {
         // Will be deprecated in frontend by splitOrder, but keeping it just in case
         return this.post('checkoutTable', { tischNr, trinkgeld });
+    },
+
+    _reservations: null,
+    async getReservations() {
+        if (this._reservations) return this._reservations;
+        try {
+            const res = await this.get('getReservations');
+            this._reservations = res.data || {};
+            return this._reservations;
+        } catch (error) {
+            console.error('Error fetching reservations:', error);
+            return {};
+        }
     }
 };

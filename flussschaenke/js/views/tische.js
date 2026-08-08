@@ -1,10 +1,14 @@
 import { api } from '../api.js';
+import { state } from '../state.js';
 import { menuData } from '../data/menu.js';
 
 export const renderTische = async (container) => {
     api.startPolling();
+    const selectedDate = state.getSelectedDate();
+    
     container.innerHTML = `
-        <div class="grid-2" id="tische-grid">
+        <div id="tische-loading" class="text-center mt-4"><span class="loader"></span> Lade Tische...</div>
+        <div class="grid-2 hidden" id="tische-grid">
             <!-- Tische injected here -->
         </div>
         
@@ -39,18 +43,34 @@ export const renderTische = async (container) => {
     `;
 
     const grid = document.getElementById('tische-grid');
-    for (let i = 1; i <= 10; i++) {
-        const card = document.createElement('div');
-        card.className = 'card text-center';
-        card.style.height = '100px';
-        card.style.display = 'flex';
-        card.style.flexDirection = 'column';
-        card.style.justifyContent = 'center';
-        card.style.alignItems = 'center';
-        card.style.cursor = 'pointer';
-        card.innerHTML = `<span class="large-amount">${i}</span><span class="text-muted">Tisch</span>`;
-        card.addEventListener('click', () => openSheet(i));
-        grid.appendChild(card);
+    const loading = document.getElementById('tische-loading');
+    
+    try {
+        const reservations = await api.getReservations();
+        loading.classList.add('hidden');
+        grid.classList.remove('hidden');
+        
+        const tablesForDay = reservations[selectedDate] || [];
+        
+        if (tablesForDay.length === 0) {
+            grid.innerHTML = '<div style="grid-column: span 2;" class="text-center text-muted">Keine Tische für dieses Datum gefunden.</div>';
+        } else {
+            tablesForDay.forEach((table, i) => {
+                const card = document.createElement('div');
+                card.className = 'card text-center';
+                card.style.height = '100px';
+                card.style.display = 'flex';
+                card.style.flexDirection = 'column';
+                card.style.justifyContent = 'center';
+                card.style.alignItems = 'center';
+                card.style.cursor = 'pointer';
+                card.innerHTML = `<span class="large-amount" style="font-size: 1.5rem;">${table.Name}</span><span class="text-muted">${table.Plätze} Plätze</span>`;
+                card.addEventListener('click', () => openSheet(table.Name));
+                grid.appendChild(card);
+            });
+        }
+    } catch (err) {
+        loading.innerHTML = '<div class="text-danger">Fehler beim Laden der Tische.</div>';
     }
 
     const overlay = document.getElementById('sheet-overlay');
@@ -69,9 +89,9 @@ export const renderTische = async (container) => {
 
     closeBtn.addEventListener('click', closeSheet);
 
-    const openSheet = async (tischNummer) => {
-        currentTisch = tischNummer;
-        document.getElementById('sheet-title').textContent = `Tisch ${tischNummer}`;
+    const openSheet = async (tischName) => {
+        currentTisch = tischName;
+        document.getElementById('sheet-title').textContent = `${tischName}`;
         document.getElementById('sheet-loading').classList.remove('hidden');
         document.getElementById('existing-orders-list').innerHTML = '';
         document.getElementById('menu-list').innerHTML = '';
@@ -85,8 +105,10 @@ export const renderTische = async (container) => {
         const renderTableOrders = (ordersList) => {
             const tableOrders = ordersList.filter(o => {
                 const status = o.Status || o.status || '';
-                return String(o.Tisch_Nr || o.tisch) === String(tischNummer) && 
-                       (status === 'Neu' || status === 'Serviert' || status === 'Bezahlt');
+                const time = o.Zeitstempel || o.zeitstempel;
+                return String(o.Tisch_Nr || o.tisch) === String(tischName) && 
+                       (status === 'Neu' || status === 'Serviert' || status === 'Bezahlt') &&
+                       state.isOrderFromSelectedDate(time);
             });
             renderExistingOrders(tableOrders);
         };
@@ -96,7 +118,7 @@ export const renderTische = async (container) => {
 
         // Background update
         api.fetchOrders().then(() => {
-            if (currentTisch === tischNummer) {
+            if (currentTisch === tischName) {
                 renderTableOrders(api._orders || []);
             }
         });

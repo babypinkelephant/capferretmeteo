@@ -1,4 +1,5 @@
 import { api } from '../api.js';
+import { state } from '../state.js';
 
 export const renderBestellungen = async (container) => {
     api.startPolling();
@@ -7,7 +8,10 @@ export const renderBestellungen = async (container) => {
     `;
 
     const renderList = (allOrders) => {
-        const orders = allOrders.filter(o => o.Status === 'Neu' || o.status === 'Neu');
+        const orders = allOrders.filter(o => 
+            (o.Status === 'Neu' || o.status === 'Neu') &&
+            state.isOrderFromSelectedDate(o.Zeitstempel || o.zeitstempel)
+        );
         const listContainer = document.getElementById('bestellungen-list');
         if (!listContainer) return;
         

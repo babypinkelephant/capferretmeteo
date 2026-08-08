@@ -14,6 +14,11 @@ function doGet(e) {
       return outputJSON({ status: 'success', data: orders });
     }
     
+    if (action === 'getReservations') {
+      let reservations = getReservationsData();
+      return outputJSON({ status: 'success', data: reservations });
+    }
+    
     return outputJSON({ status: 'error', message: 'Ungültige GET Action' });
   } catch (error) {
     return outputJSON({ status: 'error', message: error.toString() });
@@ -194,5 +199,48 @@ function getSheetData(sheetName) {
     result.push(obj);
   }
   
+  return result;
+}
+
+// Hilfsfunktion: Liest Reservationen aus "Reservationen Overview" strukturiert aus
+function getReservationsData() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Reservationen Overview');
+  if (!sheet) return {};
+  
+  const data = sheet.getDataRange().getValues();
+  const result = {};
+  
+  const dateRegex = /\d{1,2}\.\d{1,2}\.\d{4}/;
+  
+  for (let row = 0; row < data.length; row++) {
+    for (let col = 0; col < data[row].length; col += 4) { // Blöcke sind alle 4 Spalten
+      const cellValue = data[row][col];
+      if (cellValue && typeof cellValue === 'string') {
+        const match = cellValue.match(dateRegex);
+        if (match && cellValue.includes(",")) {
+          const dateKey = match[0];
+          const tables = [];
+          
+          for (let r = row + 2; r < data.length; r++) {
+            const name = data[r][col];
+            
+            if (name && typeof name === 'string' && name.match(dateRegex) && name.includes(",")) {
+              break;
+            }
+            
+            if (name === '' || name === null || name === undefined) continue;
+            if (String(name).includes("Keine Reservationen")) continue;
+            
+            const plaetze = data[r][col + 1];
+            tables.push({
+              Name: String(name),
+              Plätze: parseInt(plaetze) || 0
+            });
+          }
+          result[dateKey] = tables;
+        }
+      }
+    }
+  }
   return result;
 }

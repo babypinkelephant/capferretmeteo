@@ -1,4 +1,5 @@
 import { api } from '../api.js';
+import { state } from '../state.js';
 import { menuData } from '../data/menu.js';
 
 export const renderKasse = async (container) => {
@@ -40,7 +41,10 @@ export const renderKasse = async (container) => {
     const renderList = (newOrders) => {
         allOrders = newOrders || [];
         
-        const activeOrders = allOrders.filter(o => o.Status === 'Neu' || o.Status === 'Serviert' || o.status === 'Neu' || o.status === 'Serviert');
+        const activeOrders = allOrders.filter(o => 
+            (o.Status === 'Neu' || o.Status === 'Serviert' || o.status === 'Neu' || o.status === 'Serviert') &&
+            state.isOrderFromSelectedDate(o.Zeitstempel || o.zeitstempel)
+        );
         const activeTables = [...new Set(activeOrders.map(o => o.Tisch_Nr || o.tisch))];
         
         const grid = document.getElementById('kasse-tische-grid');
