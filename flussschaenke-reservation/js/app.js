@@ -2,25 +2,24 @@ import { api } from './api.js';
 
 // Konfiguration der 8 Veranstaltungstage
 const EVENT_DATES = [
-    { iso: '2026-11-04', dayName: 'Mittwoch',   dateFormatted: '04. November 2026' },
-    { iso: '2026-11-05', dayName: 'Donnerstag',  dateFormatted: '05. November 2026' },
-    { iso: '2026-11-06', dayName: 'Freitag',     dateFormatted: '06. November 2026' },
-    { iso: '2026-11-07', dayName: 'Samstag',     dateFormatted: '07. November 2026' },
-    { iso: '2026-11-11', dayName: 'Mittwoch',    dateFormatted: '11. November 2026' },
-    { iso: '2026-11-12', dayName: 'Donnerstag',  dateFormatted: '12. November 2026' },
-    { iso: '2026-11-13', dayName: 'Freitag',     dateFormatted: '13. November 2026' },
-    { iso: '2026-11-14', dayName: 'Samstag',     dateFormatted: '14. November 2026' }
+    { iso: '2026-11-04', dayName: 'Mittwoch', dateFormatted: '04. November 2026' },
+    { iso: '2026-11-05', dayName: 'Donnerstag', dateFormatted: '05. November 2026' },
+    { iso: '2026-11-06', dayName: 'Freitag', dateFormatted: '06. November 2026' },
+    { iso: '2026-11-07', dayName: 'Samstag', dateFormatted: '07. November 2026' },
+    { iso: '2026-11-11', dayName: 'Mittwoch', dateFormatted: '11. November 2026' },
+    { iso: '2026-11-12', dayName: 'Donnerstag', dateFormatted: '12. November 2026' },
+    { iso: '2026-11-13', dayName: 'Freitag', dateFormatted: '13. November 2026' },
+    { iso: '2026-11-14', dayName: 'Samstag', dateFormatted: '14. November 2026' }
 ];
 
 const PREFERENCE_OPTIONS = [
-    { value: 'Keine Einschränkungen',       label: 'Keine Einschränkungen' },
-    { value: 'Vegetarisch',                 label: 'Vegetarisch' },
-    { value: 'Vegan',                       label: 'Vegan' },
-    { value: 'Laktoseintoleranz',           label: 'Laktoseintoleranz' },
-    { value: 'Glutenfrei',                  label: 'Glutenfrei' },
-    { value: 'Nussallergie',                label: 'Nussallergie' },
-    { value: 'Kein Fisch / Schalentiere',   label: 'Kein Fisch / keine Schalentiere' },
-    { value: 'Sonstiges',                   label: 'Sonstige Allergie (bitte im Detailfeld angeben)' }
+    { value: 'Keine Einschränkungen', label: 'Keine Einschränkungen' },
+    { value: 'Vegetarisch', label: 'Vegetarisch' },
+    { value: 'Laktoseintoleranz', label: 'Laktoseintoleranz' },
+    { value: 'Glutenfrei', label: 'Glutenfrei' },
+    { value: 'Nussallergie', label: 'Nussallergie' },
+    { value: 'Kein Fisch / Schalentiere', label: 'Kein Fisch / keine Schalentiere' },
+    { value: 'Sonstiges', label: 'Sonstige Allergie (bitte im Detailfeld angeben)' }
 ];
 
 // App-State
@@ -254,7 +253,7 @@ function updateGuestFormCards() {
     container.innerHTML = html;
 
     for (let i = 0; i < guestCount; i++) {
-        ['vorname','nachname'].forEach(f => {
+        ['vorname', 'nachname'].forEach(f => {
             document.getElementById(`gast-${f}-${i}`)?.addEventListener('input', updateSummary);
         });
         document.getElementById(`gast-allergie-${i}`)?.addEventListener('change', updateSummary);
@@ -294,9 +293,9 @@ async function handleReservationSubmit(e) {
     const errorAlert = document.getElementById('booking-error-alert');
     errorAlert?.classList.add('hidden');
 
-    const hauptVorname  = document.getElementById('haupt-vorname')?.value.trim() || '';
+    const hauptVorname = document.getElementById('haupt-vorname')?.value.trim() || '';
     const hauptNachname = document.getElementById('haupt-nachname')?.value.trim() || '';
-    const hauptEmail    = document.getElementById('haupt-email')?.value.trim() || '';
+    const hauptEmail = document.getElementById('haupt-email')?.value.trim() || '';
 
     if (!hauptVorname || !hauptNachname || !hauptEmail) {
         alert('Bitte fülle alle Pflichtfelder des Hauptkontakts aus.');

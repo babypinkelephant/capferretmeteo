@@ -1,19 +1,24 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Flussschänke Zürich – Herbst-Reservationen</title>
-    <meta name="description" content="Sichere dir deinen Platz an den kulinarischen Herbstabenden der Flussschänke Zürich. 8 exklusive Abende im November 2026 am Limmatelier.">
-    
+    <meta name="description"
+        content="Sichere dir deinen Platz an den kulinarischen Herbstabenden der Flussschänke Zürich. 8 exklusive Abende im November 2026 am Limmatelier.">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
+
     <!-- CSS -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
 
     <!-- Site Header -->
@@ -21,10 +26,13 @@
         <div class="container header-inner">
             <a href="#" class="brand-logo">
                 <div class="brand-icon">
-                    <svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg>
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
+                    </svg>
                 </div>
                 <div class="brand-text">
-                    <h1>Flussschänke</h1>
+                    <h1>Flussschänke // <Test-Version></Test-Version></h1>
                     <span>Zürich &middot; Limmatelier</span>
                 </div>
             </a>
@@ -38,39 +46,50 @@
     <div class="success-fullpage hidden" id="booking-success-view">
         <div class="container" style="max-width: 720px; padding: 40px 20px;">
             <div class="success-icon">
-                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg>
             </div>
             <h2 style="font-size: 2.2rem; color: var(--accent-river); margin-bottom: 8px;">Reservation notiert!</h2>
             <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 24px auto;">
-                Wir haben deine Plätze reserviert. Eine Bestätigungs-E-Mail wurde an <strong id="success-email"></strong> gesendet. Twinte eure Anzahlung innert 48 Stunden. Sobald wir sie bestätigen, bist du bei uns fix auf der Liste.
+                Wir haben deine Plätze reserviert. Eine Bestätigungs-E-Mail wurde an <strong
+                    id="success-email"></strong> gesendet. Twinte eure Anzahlung innert 48 Stunden. Sobald wir sie
+                bestätigen, bist du bei uns fix auf der Liste.
             </p>
 
             <div class="booking-id-box">
-                <div class="text-muted" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Deine persönliche Booking-ID</div>
+                <div class="text-muted" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
+                    Deine persönliche Booking-ID</div>
                 <div class="booking-id-val" id="success-booking-id">RES-20261104-XXXX</div>
-                <button type="button" class="btn btn-secondary" id="btn-copy-id" style="margin-top: 10px; padding: 6px 14px; font-size: 0.85rem;">
+                <button type="button" class="btn btn-secondary" id="btn-copy-id"
+                    style="margin-top: 10px; padding: 6px 14px; font-size: 0.85rem;">
                     Booking-ID kopieren
                 </button>
             </div>
 
             <!-- Twint QR -->
             <div style="margin: 30px auto; max-width: 240px; text-align: center;">
-                <p style="font-weight: 600; margin-bottom: 10px; color: var(--text-main);">Anzahlung per Twint (CHF 50 / Person)</p>
-                <img src="img/twint.png" alt="Twint QR Code" style="width: 100%; height: auto; border-radius: 12px; border: 2px solid var(--border-color);">
+                <p style="font-weight: 600; margin-bottom: 10px; color: var(--text-main);">Anzahlung per Twint (CHF 50 /
+                    Person)</p>
+                <img src="img/twint.png" alt="Twint QR Code"
+                    style="width: 100%; height: auto; border-radius: 12px; border: 2px solid var(--border-color);">
             </div>
 
-            <div style="background: var(--bg-card-subtle); padding: 24px; border-radius: var(--radius-md); text-align: left; max-width: 650px; margin: 0 auto 32px auto; border: 1px solid var(--border-color);">
+            <div
+                style="background: var(--bg-card-subtle); padding: 24px; border-radius: var(--radius-md); text-align: left; max-width: 650px; margin: 0 auto 32px auto; border: 1px solid var(--border-color);">
                 <h3 style="color: var(--primary-dark); margin-top: 0; margin-bottom: 14px;">Buchungsdetails</h3>
                 <p><strong>Datum:</strong> <span id="success-date"></span></p>
                 <p><strong>Zeiten:</strong> Eintreffen ab 18:00 Uhr | Menüstart 19:00 Uhr</p>
                 <p><strong>Reservierte Plätze:</strong> <span id="success-seats"></span></p>
-                
-                <h4 style="margin-top: 20px; margin-bottom: 10px; color: var(--accent-river);">Erfasste Gästeliste &amp; Präferenzen:</h4>
+
+                <h4 style="margin-top: 20px; margin-bottom: 10px; color: var(--accent-river);">Erfasste Gästeliste &amp;
+                    Präferenzen:</h4>
                 <div id="success-guest-list"></div>
             </div>
 
             <div class="alert alert-success" style="max-width: 650px; margin: 0 auto 32px auto; text-align: left;">
-                <strong>Wichtiger Hinweis:</strong> Du kannst deine Gästedaten sowie Allergien jederzeit mit deiner Haupt-E-Mail und deiner Booking-ID unter "Reservation verwalten" anpassen.
+                <strong>Wichtiger Hinweis:</strong> Du kannst deine Gästedaten sowie Allergien jederzeit mit deiner
+                Haupt-E-Mail und deiner Booking-ID unter "Reservation verwalten" anpassen.
             </div>
 
             <button type="button" class="btn btn-primary" onclick="window.location.reload();">
@@ -88,34 +107,47 @@
             </div>
             <h1 class="hero-title">Züri meets Leventina</h1>
             <p class="hero-subtitle">
-                Acht Gang Degustations Menu &ndash; vom See auf die Alp, in den Stall und über die Hochwildjagd zurück zum Fluss.
+                Acht Gang Degustations Menu &ndash; vom See auf die Alp, in den Stall und über die Hochwildjagd zurück
+                zum Fluss.
             </p>
 
             <div class="hero-info-grid">
                 <div class="hero-info-card">
                     <div class="hero-info-icon">
-                        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z" />
+                        </svg>
                     </div>
                     <div class="hero-info-label">Veranstaltungsdaten</div>
                     <div class="hero-info-val">4.&ndash;14. November 2026</div>
                 </div>
                 <div class="hero-info-card">
                     <div class="hero-info-icon">
-                        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
+                        </svg>
                     </div>
                     <div class="hero-info-label">Zeiten</div>
                     <div class="hero-info-val">Eintreffen 18h &middot; Start 19h</div>
                 </div>
                 <div class="hero-info-card">
                     <div class="hero-info-icon">
-                        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                        </svg>
                     </div>
                     <div class="hero-info-label">Location</div>
-                    <div class="hero-info-val">Limmatelier, Hönggerstr. 45a</div>
+                    <div class="hero-info-val">Limmatelier, Hönggerstr. 45a, 8037 Zürich</div>
                 </div>
                 <div class="hero-info-card">
                     <div class="hero-info-icon">
-                        <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" />
+                        </svg>
                     </div>
                     <div class="hero-info-label">Preis</div>
                     <div class="hero-info-val">CHF 93 / Person</div>
@@ -126,21 +158,24 @@
 
     <!-- Main Content / Form Area -->
     <main class="container main-content">
-        
+
         <!-- Info Blocks -->
         <div class="info-sections">
             <div class="info-block">
                 <h3>Das erwartet dich</h3>
-                <p>Freue dich auf eine kulinarische Reise vom See auf die Alp in den Stall und über die Hochwildjagd zurück zum Fluss. Alles lokal, alles saisonal &ndash; aus Zürich und der Leventina.</p>
+                <p>Freue dich auf eine kulinarische Reise vom See auf die Alp in den Stall und über die Hochwildjagd
+                    zurück zum Fluss. Alles lokal, alles saisonal &ndash; aus Zürich und der Leventina.</p>
                 <p class="info-note">Vegi Option verfügbar &ndash; bitte anmelden.</p>
             </div>
             <div class="info-block">
                 <h3>Das musst du wissen</h3>
-                <p>CHF 93 / Person (Pre-Pay CHF 50 via Twint nach der Reservation innert 48 Stunden). Inkl. Züri-Wasser. Exkl. andere Getränke &ndash; bequem vor Ort via Twint.</p>
+                <p>CHF 93 / Person (Pre-Pay CHF 50 / Person via Twint nach der Reservation innert 48 Stunden). Inkl.
+                    Züri-Wasser. Exkl. andere Getränke &ndash; bequem vor Ort via Twint.</p>
             </div>
             <div class="info-block">
                 <h3>Kleingedrucktes</h3>
-                <p>Sobald die Reservation bestätigt ist, kannst du bis 48h vorher kostenlos stornieren. Bei Absagen kürzer als 48h verrechnen wir die Anzahlung.</p>
+                <p>Sobald die Reservation bestätigt ist, kannst du bis 48h vorher kostenlos per Email stornieren. Bei
+                    Absagen kürzer als 48h verrechnen wir die Anzahlung.</p>
             </div>
         </div>
 
@@ -173,8 +208,10 @@
 
                     <div class="guest-selector-wrapper">
                         <div>
-                            <div style="font-weight: 700; color: var(--accent-river); font-size: 1.1rem;">Anzahl Plätze</div>
-                            <div class="text-muted" style="font-size: 0.85rem;">Maximal 10 Plätze pro Buchung online</div>
+                            <div style="font-weight: 700; color: var(--accent-river); font-size: 1.1rem;">Anzahl Plätze
+                            </div>
+                            <div class="text-muted" style="font-size: 0.85rem;">Maximal 10 Plätze pro Buchung online
+                            </div>
                         </div>
 
                         <div class="guest-counter">
@@ -196,8 +233,10 @@
                     </div>
 
                     <!-- Hauptkontakt -->
-                    <div style="background: var(--bg-card-subtle); padding: 24px; border-radius: var(--radius-md); margin-bottom: 28px; border: 1px solid var(--border-accent);">
-                        <h3 style="font-size: 1.2rem; color: var(--accent-river); margin-bottom: 16px;">Buchende Person (Hauptkontakt)</h3>
+                    <div
+                        style="background: var(--bg-card-subtle); padding: 24px; border-radius: var(--radius-md); margin-bottom: 28px; border: 1px solid var(--border-accent);">
+                        <h3 style="font-size: 1.2rem; color: var(--accent-river); margin-bottom: 16px;">Buchende Person
+                            (Hauptkontakt)</h3>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="haupt-vorname">Vorname *</label>
@@ -210,20 +249,23 @@
                             <div class="form-group">
                                 <label for="haupt-email">Haupt-E-Mail *</label>
                                 <input type="email" id="haupt-email" placeholder="marc.meier@beispiel.ch" required>
-                                <div class="text-muted" style="font-size: 0.75rem; margin-top: 4px;">An diese E-Mail senden wir die Buchungsbestätigung &amp; Booking-ID.</div>
+                                <div class="text-muted" style="font-size: 0.75rem; margin-top: 4px;">An diese E-Mail
+                                    senden wir die Buchungsbestätigung &amp; Booking-ID.</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Dynamische Gästeliste -->
-                    <h3 style="font-size: 1.2rem; color: var(--accent-river); margin-bottom: 16px;">Gästeangaben &amp; Allergien pro Platz</h3>
+                    <h3 style="font-size: 1.2rem; color: var(--accent-river); margin-bottom: 16px;">Gästeangaben &amp;
+                        Allergien pro Platz</h3>
                     <div id="guests-container">
                         <!-- Gästekarten werden via JS dynamisch erzeugt -->
                     </div>
 
                     <!-- Zusammenfassungs-Box -->
                     <div class="summary-box">
-                        <h3 style="margin-top: 0; color: var(--primary-dark); font-size: 1.2rem; margin-bottom: 16px;">Übersicht deiner Buchung</h3>
+                        <h3 style="margin-top: 0; color: var(--primary-dark); font-size: 1.2rem; margin-bottom: 16px;">
+                            Übersicht deiner Buchung</h3>
                         <div class="summary-row">
                             <span>Datum:</span>
                             <strong id="sum-date">-</strong>
@@ -252,9 +294,12 @@
 
                     <!-- AGB Checkbox -->
                     <div style="margin: 20px 0; display: flex; align-items: flex-start; gap: 12px;">
-                        <input type="checkbox" id="agb-checkbox" style="width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0;" required>
-                        <label for="agb-checkbox" style="font-weight: normal; font-size: 0.9rem; line-height: 1.5; color: var(--text-main);">
-                            Ich akzeptiere die Bedingungen: CHF 93 / Person, wovon CHF 50 als Anzahlung via Twint innert 48h fällig wird. Bei Stornierung kürzer als 48h vor Start wird die Anzahlung verrechnet.
+                        <input type="checkbox" id="agb-checkbox"
+                            style="width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0;" required>
+                        <label for="agb-checkbox"
+                            style="font-weight: normal; font-size: 0.9rem; line-height: 1.5; color: var(--text-main);">
+                            Ich akzeptiere die Bedingungen: CHF 93 / Person, wovon CHF 50 als Anzahlung via Twint innert
+                            48h fällig wird. Bei Stornierung kürzer als 48h vor Start wird die Anzahlung verrechnet.
                         </label>
                     </div>
 
@@ -262,7 +307,8 @@
                     <div class="alert alert-danger hidden" id="booking-error-alert"></div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary btn-block" id="btn-submit-booking" style="font-size: 1.1rem; padding: 18px;">
+                    <button type="submit" class="btn btn-primary btn-block" id="btn-submit-booking"
+                        style="font-size: 1.1rem; padding: 18px;">
                         Reservation abschicken
                     </button>
                 </div>
@@ -285,7 +331,8 @@
             <!-- Schritt A: Suche -->
             <div id="lookup-step">
                 <p class="text-muted mb-4">
-                    Gib deine Haupt-E-Mail-Adresse und deine Booking-ID ein, um deine Reservation aufzurufen und Angaben anzupassen.
+                    Gib deine Haupt-E-Mail-Adresse und deine Booking-ID ein, um deine Reservation aufzurufen und Angaben
+                    anzupassen.
                 </p>
 
                 <form id="form-lookup">
@@ -309,10 +356,14 @@
 
             <!-- Schritt B: Bearbeiten -->
             <div id="manage-edit-step" class="hidden">
-                <div style="background: var(--accent-gold-light); padding: 16px; border-radius: var(--radius-md); margin-bottom: 20px; border: 1px solid var(--border-accent);">
-                    <div style="font-weight: 700; color: var(--primary-dark);">Booking-ID: <span id="manage-booking-id"></span></div>
-                    <div style="font-size: 0.9rem; color: var(--text-muted);">Datum: <strong id="manage-date"></strong></div>
-                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 4px;">Status Bezahlung: <strong id="manage-payment-status"></strong></div>
+                <div
+                    style="background: var(--accent-gold-light); padding: 16px; border-radius: var(--radius-md); margin-bottom: 20px; border: 1px solid var(--border-accent);">
+                    <div style="font-weight: 700; color: var(--primary-dark);">Booking-ID: <span
+                            id="manage-booking-id"></span></div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted);">Datum: <strong id="manage-date"></strong>
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 4px;">Status Bezahlung: <strong
+                            id="manage-payment-status"></strong></div>
                 </div>
 
                 <form id="form-manage-update">
@@ -323,7 +374,8 @@
                     <div class="alert alert-danger hidden" id="manage-alert"></div>
 
                     <div style="display: flex; gap: 12px; margin-top: 24px;">
-                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('manage-edit-step').classList.add('hidden'); document.getElementById('lookup-step').classList.remove('hidden');">
+                        <button type="button" class="btn btn-secondary"
+                            onclick="document.getElementById('manage-edit-step').classList.add('hidden'); document.getElementById('lookup-step').classList.remove('hidden');">
                             Zurück
                         </button>
                         <button type="submit" class="btn btn-primary" id="btn-submit-update" style="flex: 1;">
@@ -339,4 +391,5 @@
     <!-- Scripts -->
     <script type="module" src="js/app.js"></script>
 </body>
+
 </html>

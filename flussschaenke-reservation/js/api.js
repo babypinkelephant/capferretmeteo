@@ -1,68 +1,69 @@
 /**
  * Flussschänke Zürich - Reservation API Client
- *
- * GESCHWINDIGKEITS-STRATEGIE:
- * - Beim Seitenstart wird sofort der gecachte Stand abgerufen (< 200ms).
- * - Alle 30s wird der Cache erneut abgefragt (bleibt schnell, da Cache-Hit).
- * - Das Backend-Trigger aktualisiert den Cache unabhängig jede Minute.
  */
 
-// Deine Google Apps Script Web-App URL (nach neuem Deployment hier eintragen)
+// Die Google Apps Script Web-App URL (bereits mit dem Backend-Skript backend.gs verknüpft)
 const API_URL = 'https://script.google.com/macros/s/AKfycbzKSQikJNqhx2Y0goObe4ARybjKeqLMPZAB8AD51VU21MkH4Z3crKwXpP4jtCRQTI6ThA/exec';
 
 export const api = {
     /**
-     * POST Request (text/plain vermeidet CORS preflight)
+     * POST Request an das Apps Script senden (text/plain vermeidet CORS preflight Probleme)
      */
     async post(action, payload = {}) {
         try {
-            const res = await fetch(API_URL, {
+            const response = await fetch(API_URL, {
                 method: 'POST',
-                redirect: 'follow',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action, ...payload })
             });
-            if (!res.ok) throw new Error(`Netzwerkfehler (${res.status})`);
-            return await res.json();
-        } catch (err) {
-            console.error(`API POST [${action}]:`, err);
-            throw err;
+            if (!response.ok) throw new Error('Netzwerkfehler beim Kommunizieren mit dem Server.');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`API POST Error [${action}]:`, error);
+            throw error;
         }
     },
 
     /**
-     * GET Request
+     * GET Request an das Apps Script senden
      */
     async get(action, params = {}) {
         try {
             const url = new URL(API_URL);
             url.searchParams.append('action', action);
-            Object.entries(params).forEach(([k, v]) => {
-                if (v !== undefined && v !== null) url.searchParams.append(k, v);
+            Object.keys(params).forEach(key => {
+                if (params[key] !== undefined && params[key] !== null) {
+                    url.searchParams.append(key, params[key]);
+                }
             });
-            const res = await fetch(url.toString(), { method: 'GET' });
-            if (!res.ok) throw new Error('Netzwerkfehler');
-            return await res.json();
-        } catch (err) {
-            console.error(`API GET [${action}]:`, err);
-            throw err;
+
+            const response = await fetch(url.toString(), { method: 'GET' });
+            if (!response.ok) throw new Error('Netzwerkfehler beim Abrufen der Daten.');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`API GET Error [${action}]:`, error);
+            throw error;
         }
     },
 
     /**
-     * Polling – liest alle 30s den (gecachten) Stand vom Backend.
-     * Da das Backend einen CacheService nutzt, ist jede Antwort < 300ms.
+     * Polling-Mechanismus: Alle 5 Sekunden Verfügbarkeiten abrufen
      */
     _pollingInterval: null,
+    _lastAvailability: null,
 
     startPolling(callback) {
-        // Sofort beim Start
+        // Sofort erste Abfrage durchführen
         this.fetchAvailability(callback);
-        // Danach alle 30 Sekunden (Cache-Hit, schnell)
+
         if (this._pollingInterval) clearInterval(this._pollingInterval);
+
+        // 5-Sekunden Takt
         this._pollingInterval = setInterval(() => {
             this.fetchAvailability(callback);
-        }, 30000);
+        }, 5000);
     },
 
     stopPolling() {
@@ -75,23 +76,47 @@ export const api = {
     async fetchAvailability(callback) {
         try {
             const res = await this.get('getAvailability');
-            if (res?.status === 'success' && res?.data) {
-                if (typeof callback === 'function') callback(res.data);
+            if (res && res.status === 'success' && res.data) {
+                this._lastAvailability = res.data;
+                if (typeof callback === 'function') {
+                    callback(res.data);
+                }
             }
         } catch (err) {
-            console.warn('Verfügbarkeit konnte nicht geladen werden:', err);
+            console.warn('Verfügbarkeits-Polling pausiert/Fehler:', err);
         }
     },
 
+    /**
+     * Neue Reservation erstellen
+     */
     async createReservation(datum, hauptNachname, hauptEmail, gaeste) {
-        return await this.post('createReservation', { datum, hauptNachname, hauptEmail, gaeste });
+        return await this.post('createReservation', {
+            datum,
+            hauptNachname,
+            hauptEmail,
+            gaeste
+        });
     },
 
+    /**
+     * Bestehende Reservation via E-Mail & Booking-ID suchen
+     */
     async lookupBooking(email, bookingId) {
-        return await this.get('lookupBooking', { email, bookingId });
+        return await this.get('lookupBooking', {
+            email,
+            bookingId
+        });
     },
 
+    /**
+     * Bestehende Reservation aktualisieren
+     */
     async updateReservation(bookingId, hauptEmail, gaeste) {
-        return await this.post('updateReservation', { bookingId, hauptEmail, gaeste });
+        return await this.post('updateReservation', {
+            bookingId,
+            hauptEmail,
+            gaeste
+        });
     }
 };
