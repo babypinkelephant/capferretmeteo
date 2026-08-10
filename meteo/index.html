@@ -119,8 +119,23 @@
                 </div>
 
                 <div id="tab-archiv" class="tab-content">
-                    <div class="archive-chart-wrapper" style="position: relative; height: 50vh; min-height: 400px; padding: 15px;">
-                        <canvas id="archiveChart"></canvas>
+                    <div class="archive-charts-container" style="display: flex; flex-direction: column; gap: 30px; padding: 15px;">
+                        <div class="archive-chart-wrapper" style="position: relative; height: 40vh; min-height: 300px;">
+                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px;">Temperatur</h3>
+                            <canvas id="archiveChartTemp"></canvas>
+                        </div>
+                        <div class="archive-chart-wrapper" style="position: relative; height: 30vh; min-height: 250px;">
+                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px;">Niederschlag</h3>
+                            <canvas id="archiveChartRain"></canvas>
+                        </div>
+                        <div class="archive-chart-wrapper" style="position: relative; height: 30vh; min-height: 250px;">
+                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px;">Wind</h3>
+                            <canvas id="archiveChartWind"></canvas>
+                        </div>
+                        <div class="archive-chart-wrapper" style="position: relative; height: 30vh; min-height: 250px;">
+                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px;">UV Index</h3>
+                            <canvas id="archiveChartUV"></canvas>
+                        </div>
                     </div>
                 </div>
 

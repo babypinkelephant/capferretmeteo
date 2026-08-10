@@ -94,97 +94,183 @@ function updateStats(data) {
 }
 
 function renderArchive(data) {
-    const ctxEl = document.getElementById('archiveChart');
-    if (!ctxEl) return;
-    
-    const ctx = ctxEl.getContext('2d');
-    
-    // Zeige die letzten 14 Tage an
-    const daysToShow = data.slice(0, 14); 
+    if (!data || data.length === 0) return;
 
-    const labels = daysToShow.map(day => day["Datum"] || "--");
-    const tempMins = daysToShow.map(day => day["Temp (MIN)"] !== undefined ? parseFloat(day["Temp (MIN)"]) : null);
-    const tempMaxs = daysToShow.map(day => day["Temp (MAX)"] !== undefined ? parseFloat(day["Temp (MAX)"]) : null);
-    const rains = daysToShow.map(day => day["Regen (Gesamt mm)"] !== undefined ? parseFloat(day["Regen (Gesamt mm)"]) : 0);
+    // 1. Alle Daten anzeigen (kein slice mehr)
+    const labels = data.map(day => day["Datum"] || "--");
+    
+    const parse = (val, fallback = null) => (val !== undefined && val !== "") ? parseFloat(val) : fallback;
 
-    if (chartInstances['archiveMain']) chartInstances['archiveMain'].destroy();
+    const tempAvg = data.map(day => parse(day["Temp (avg)"]));
+    const tempMins = data.map(day => parse(day["Temp (MIN)"]));
+    const tempMaxs = data.map(day => parse(day["Temp (MAX)"]));
+    
+    const rains = data.map(day => parse(day["Regen (Gesamt mm)"], 0));
+    
+    const windAvg = data.map(day => parse(day["Wind-S (avg)"]));
+    const windGusts = data.map(day => parse(day["Böen (MAX)"]));
+    
+    const uvs = data.map(day => parse(day["UV (MAX)"], 0));
 
     Chart.defaults.color = 'rgba(255, 255, 255, 0.8)';
     Chart.defaults.font.family = "'Outfit', sans-serif";
 
-    chartInstances['archiveMain'] = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Temp Max (°C)',
-                    data: tempMaxs,
-                    borderColor: '#ff7675',
-                    backgroundColor: 'transparent',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Temp Min (°C)',
-                    data: tempMins,
-                    borderColor: '#74b9ff',
-                    backgroundColor: 'transparent',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Regen (mm)',
-                    type: 'bar',
-                    data: rains,
-                    backgroundColor: 'rgba(9, 132, 227, 0.5)',
-                    borderColor: 'rgba(9, 132, 227, 0.8)',
-                    borderWidth: 1,
-                    yAxisID: 'y1'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { 
-                legend: { 
-                    display: true,
-                    labels: { color: 'rgba(255, 255, 255, 0.9)' }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    titleColor: '#1a202c', 
-                    bodyColor: '#1a202c', 
-                    cornerRadius: 8,
-                    padding: 10
-                }
+    const xAxesOptions = {
+        grid: { color: 'rgba(255,255,255,0.1)' }, 
+        ticks: { color: 'rgba(255, 255, 255, 0.7)', maxTicksLimit: 14 }
+    };
+    
+    const tooltipsShared = {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        titleColor: '#1a202c', 
+        bodyColor: '#1a202c', 
+        cornerRadius: 8,
+        padding: 10
+    };
+
+    // 1. Temperatur Diagramm
+    const ctxTemp = document.getElementById('archiveChartTemp');
+    if (ctxTemp) {
+        if (chartInstances['archiveTemp']) chartInstances['archiveTemp'].destroy();
+        chartInstances['archiveTemp'] = new Chart(ctxTemp.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Temp (MAX)',
+                        data: tempMaxs,
+                        borderColor: '#ff4d4d', // Rot
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Temp (avg)',
+                        data: tempAvg,
+                        borderColor: '#ffffff', // Weiß
+                        borderDash: [5, 5],
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Temp (MIN)',
+                        data: tempMins,
+                        borderColor: '#3498db', // Blau
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4
+                    }
+                ]
             },
-            scales: { 
-                x: { 
-                    grid: { color: 'rgba(255,255,255,0.1)' }, 
-                    ticks: { color: 'rgba(255, 255, 255, 0.7)', maxTicksLimit: 14 } 
-                }, 
-                y: { 
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    ticks: { color: 'rgba(255, 255, 255, 0.7)' }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    grid: { drawOnChartArea: false },
-                    ticks: { color: 'rgba(116, 185, 255, 1)' }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true }, tooltip: tooltipsShared },
+                scales: { 
+                    x: xAxesOptions, 
+                    y: { 
+                        display: true, 
+                        grid: { 
+                            color: (context) => context.tick.value === 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255,255,255,0.1)',
+                            lineWidth: (context) => context.tick.value === 0 ? 2 : 1
+                        },
+                        ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                    }
                 }
             }
-        }
-    });
+        });
+    }
+
+    // 2. Niederschlag Diagramm
+    const ctxRain = document.getElementById('archiveChartRain');
+    if (ctxRain) {
+        if (chartInstances['archiveRain']) chartInstances['archiveRain'].destroy();
+        chartInstances['archiveRain'] = new Chart(ctxRain.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Regen (mm)',
+                    data: rains,
+                    backgroundColor: 'rgba(9, 132, 227, 0.7)',
+                    borderColor: 'rgba(9, 132, 227, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true }, tooltip: tooltipsShared },
+                scales: { x: xAxesOptions, y: { display: true, grid: { color: 'rgba(255,255,255,0.1)' } } }
+            }
+        });
+    }
+
+    // 3. Wind Diagramm
+    const ctxWind = document.getElementById('archiveChartWind');
+    if (ctxWind) {
+        if (chartInstances['archiveWind']) chartInstances['archiveWind'].destroy();
+        chartInstances['archiveWind'] = new Chart(ctxWind.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Böen (MAX) km/h',
+                        data: windGusts,
+                        borderColor: '#e1b12c',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Wind-S (avg) km/h',
+                        data: windAvg,
+                        borderColor: '#fbc531',
+                        borderDash: [5, 5],
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true }, tooltip: tooltipsShared },
+                scales: { x: xAxesOptions, y: { display: true, grid: { color: 'rgba(255,255,255,0.1)' }, beginAtZero: true } }
+            }
+        });
+    }
+
+    // 4. UV Diagramm
+    const ctxUV = document.getElementById('archiveChartUV');
+    if (ctxUV) {
+        if (chartInstances['archiveUV']) chartInstances['archiveUV'].destroy();
+        chartInstances['archiveUV'] = new Chart(ctxUV.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'UV Index (MAX)',
+                    data: uvs,
+                    borderColor: '#9c88ff',
+                    backgroundColor: 'rgba(156, 136, 255, 0.2)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true }, tooltip: tooltipsShared },
+                scales: { x: xAxesOptions, y: { display: true, grid: { color: 'rgba(255,255,255,0.1)' }, beginAtZero: true } }
+            }
+        });
+    }
 }
 
 function renderTempChart(data) {
