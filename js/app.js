@@ -1,6 +1,7 @@
 const googleScriptUrl = "https://script.google.com/macros/s/AKfycbyBh5QG1q-YhsQLCqBvMWgKyx-5Rxo9yKXWLIelasjKoFb6iB_m7vMC1N65BKmsfuKWQw/exec";
 
 let historyData = [];
+let archiveDataGlobal = [];
 let chartInstances = {};
 
 // Tab Navigation Logik
@@ -34,7 +35,8 @@ async function init() {
         const resArchiv = await fetch(googleScriptUrl + "?type=archiv");
         const jsonArchiv = await resArchiv.json();
         if(jsonArchiv && jsonArchiv.length > 0) {
-            renderArchive(jsonArchiv);
+            archiveDataGlobal = jsonArchiv;
+            renderArchive(archiveDataGlobal);
         }
 
         document.getElementById('loader').classList.add('hidden');
@@ -93,31 +95,48 @@ function updateStats(data) {
     if (document.getElementById('stat-avg')) document.getElementById('stat-avg').innerText = avg + "°";
 }
 
+function updateArchiveTimeframe() {
+    renderArchive(archiveDataGlobal);
+}
+
 function renderArchive(data) {
     if (!data || data.length === 0) return;
 
-    // 1. Alle Daten anzeigen (kein slice mehr)
-    const labels = data.map(day => day["Datum"] || "--");
+    const timeframe = document.getElementById('archiveTimeframe') ? document.getElementById('archiveTimeframe').value : '14';
+    let filteredData = data;
+    
+    if (timeframe !== 'all') {
+        const days = parseInt(timeframe, 10);
+        // The data is chronological (oldest to newest based on previous code). 
+        // We want the last 'days' elements.
+        filteredData = data.slice(-days);
+    }
+
+    const labels = filteredData.map(day => {
+        let d = day["Datum"] || "--";
+        if (d.includes("T")) d = d.split("T")[0]; // nur das Datum
+        return d;
+    });
     
     const parse = (val, fallback = null) => (val !== undefined && val !== "") ? parseFloat(val) : fallback;
 
-    const tempAvg = data.map(day => parse(day["Temp (avg)"]));
-    const tempMins = data.map(day => parse(day["Temp (MIN)"]));
-    const tempMaxs = data.map(day => parse(day["Temp (MAX)"]));
+    const tempAvg = filteredData.map(day => parse(day["Temp (avg)"]));
+    const tempMins = filteredData.map(day => parse(day["Temp (MIN)"]));
+    const tempMaxs = filteredData.map(day => parse(day["Temp (MAX)"]));
     
-    const rains = data.map(day => parse(day["Regen (Gesamt mm)"], 0));
+    const rains = filteredData.map(day => parse(day["Regen (Gesamt mm)"], 0));
     
-    const windAvg = data.map(day => parse(day["Wind-S (avg)"]));
-    const windGusts = data.map(day => parse(day["Böen (MAX)"]));
+    const windAvg = filteredData.map(day => parse(day["Wind-S (avg)"]));
+    const windGusts = filteredData.map(day => parse(day["Böen (MAX)"]));
     
-    const uvs = data.map(day => parse(day["UV (MAX)"], 0));
+    const uvs = filteredData.map(day => parse(day["UV (MAX)"], 0));
 
     Chart.defaults.color = 'rgba(255, 255, 255, 0.8)';
     Chart.defaults.font.family = "'Outfit', sans-serif";
 
     const xAxesOptions = {
         grid: { color: 'rgba(255,255,255,0.1)' }, 
-        ticks: { color: 'rgba(255, 255, 255, 0.7)', maxTicksLimit: 14 }
+        ticks: { color: 'rgba(255, 255, 255, 0.7)', maxTicksLimit: 7, maxRotation: 45, minRotation: 45 }
     };
     
     const tooltipsShared = {
@@ -125,7 +144,14 @@ function renderArchive(data) {
         titleColor: '#1a202c', 
         bodyColor: '#1a202c', 
         cornerRadius: 8,
-        padding: 10
+        padding: 10,
+        mode: 'index',
+        intersect: false
+    };
+
+    const pointOptions = {
+        pointRadius: 0,
+        pointHoverRadius: 6
     };
 
     // 1. Temperatur Diagramm
@@ -143,7 +169,8 @@ function renderArchive(data) {
                         borderColor: '#ff4d4d', // Rot
                         backgroundColor: 'transparent',
                         borderWidth: 2,
-                        tension: 0.4
+                        tension: 0.4,
+                        ...pointOptions
                     },
                     {
                         label: 'Temp (avg)',
@@ -152,7 +179,8 @@ function renderArchive(data) {
                         borderDash: [5, 5],
                         backgroundColor: 'transparent',
                         borderWidth: 2,
-                        tension: 0.4
+                        tension: 0.4,
+                        ...pointOptions
                     },
                     {
                         label: 'Temp (MIN)',
@@ -160,7 +188,8 @@ function renderArchive(data) {
                         borderColor: '#3498db', // Blau
                         backgroundColor: 'transparent',
                         borderWidth: 2,
-                        tension: 0.4
+                        tension: 0.4,
+                        ...pointOptions
                     }
                 ]
             },
@@ -223,7 +252,8 @@ function renderArchive(data) {
                         borderColor: '#e1b12c',
                         backgroundColor: 'transparent',
                         borderWidth: 2,
-                        tension: 0.4
+                        tension: 0.4,
+                        ...pointOptions
                     },
                     {
                         label: 'Wind-S (avg) km/h',
@@ -232,7 +262,8 @@ function renderArchive(data) {
                         borderDash: [5, 5],
                         backgroundColor: 'transparent',
                         borderWidth: 2,
-                        tension: 0.4
+                        tension: 0.4,
+                        ...pointOptions
                     }
                 ]
             },
@@ -260,7 +291,8 @@ function renderArchive(data) {
                     backgroundColor: 'rgba(156, 136, 255, 0.2)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    ...pointOptions
                 }]
             },
             options: {

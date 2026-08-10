@@ -119,21 +119,30 @@
                 </div>
 
                 <div id="tab-archiv" class="tab-content">
-                    <div class="archive-charts-container" style="display: flex; flex-direction: column; gap: 30px; padding: 15px;">
-                        <div class="archive-chart-wrapper" style="position: relative; height: 40vh; min-height: 300px;">
-                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px;">Temperatur</h3>
+                    <div class="archive-controls" style="text-align: center; padding: 15px 15px 0 15px;">
+                        <label for="archiveTimeframe" style="color: rgba(255,255,255,0.8); margin-right: 10px;">Zeitraum:</label>
+                        <select id="archiveTimeframe" onchange="updateArchiveTimeframe()" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; border-radius: 5px; font-family: 'Outfit', sans-serif;">
+                            <option value="7">Letzte 7 Tage</option>
+                            <option value="14" selected>Letzte 14 Tage</option>
+                            <option value="30">Letzte 30 Tage</option>
+                            <option value="all">Alle (seit Messbeginn)</option>
+                        </select>
+                    </div>
+                    <div class="archive-charts-container" style="display: flex; flex-direction: column; gap: 40px; padding: 15px; overflow: hidden; width: 100%; box-sizing: border-box;">
+                        <div class="archive-chart-wrapper" style="position: relative; height: 35vh; min-height: 250px; width: 100%;">
+                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px; font-size: 1.2rem;">Temperatur</h3>
                             <canvas id="archiveChartTemp"></canvas>
                         </div>
-                        <div class="archive-chart-wrapper" style="position: relative; height: 30vh; min-height: 250px;">
-                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px;">Niederschlag</h3>
+                        <div class="archive-chart-wrapper" style="position: relative; height: 25vh; min-height: 200px; width: 100%;">
+                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px; font-size: 1.2rem;">Niederschlag</h3>
                             <canvas id="archiveChartRain"></canvas>
                         </div>
-                        <div class="archive-chart-wrapper" style="position: relative; height: 30vh; min-height: 250px;">
-                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px;">Wind</h3>
+                        <div class="archive-chart-wrapper" style="position: relative; height: 25vh; min-height: 200px; width: 100%;">
+                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px; font-size: 1.2rem;">Wind</h3>
                             <canvas id="archiveChartWind"></canvas>
                         </div>
-                        <div class="archive-chart-wrapper" style="position: relative; height: 30vh; min-height: 250px;">
-                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px;">UV Index</h3>
+                        <div class="archive-chart-wrapper" style="position: relative; height: 25vh; min-height: 200px; width: 100%;">
+                            <h3 style="text-align: center; color: white; opacity: 0.8; margin-bottom: 10px; font-size: 1.2rem;">UV Index</h3>
                             <canvas id="archiveChartUV"></canvas>
                         </div>
                     </div>
