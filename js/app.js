@@ -94,32 +94,96 @@ function updateStats(data) {
 }
 
 function renderArchive(data) {
-    const container = document.getElementById('archiveContainer');
-    if (!container) return;
+    const ctxEl = document.getElementById('archiveChart');
+    if (!ctxEl) return;
     
-    container.innerHTML = ""; 
+    const ctx = ctxEl.getContext('2d');
     
     // Zeige die letzten 14 Tage an
     const daysToShow = data.slice(0, 14); 
 
-    daysToShow.forEach(day => {
-        const date = day["Datum"] || "--";
-        const tempMin = day["Temp (MIN)"] !== undefined ? day["Temp (MIN)"] : "--";
-        const tempMax = day["Temp (MAX)"] !== undefined ? day["Temp (MAX)"] : "--";
-        const rain = day["Regen (Gesamt mm)"] !== undefined ? day["Regen (Gesamt mm)"] : "0";
-        const gust = day["Böen (MAX)"] !== undefined ? day["Böen (MAX)"] : "--";
-        const luxh = day["Licht (Gesamt Luxh)"] !== undefined ? day["Licht (Gesamt Luxh)"] : "--";
+    const labels = daysToShow.map(day => day["Datum"] || "--");
+    const tempMins = daysToShow.map(day => day["Temp (MIN)"] !== undefined ? parseFloat(day["Temp (MIN)"]) : null);
+    const tempMaxs = daysToShow.map(day => day["Temp (MAX)"] !== undefined ? parseFloat(day["Temp (MAX)"]) : null);
+    const rains = daysToShow.map(day => day["Regen (Gesamt mm)"] !== undefined ? parseFloat(day["Regen (Gesamt mm)"]) : 0);
 
-        const card = document.createElement('div');
-        card.className = "archive-card";
-        card.innerHTML = `
-            <div class="ac-date">📅 ${date}</div>
-            <div class="ac-row"><span class="ac-label">Temperatur:</span><span class="ac-val">${tempMin}° / ${tempMax}°</span></div>
-            <div class="ac-row"><span class="ac-label">Regen:</span><span class="ac-val">${rain} mm</span></div>
-            <div class="ac-row"><span class="ac-label">Spitzenböe:</span><span class="ac-val">${gust} km/h</span></div>
-            <div class="ac-row"><span class="ac-label">Lux-Stunden:</span><span class="ac-val">${luxh}</span></div>
-        `;
-        container.appendChild(card);
+    if (chartInstances['archiveMain']) chartInstances['archiveMain'].destroy();
+
+    Chart.defaults.color = 'rgba(255, 255, 255, 0.8)';
+    Chart.defaults.font.family = "'Outfit', sans-serif";
+
+    chartInstances['archiveMain'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Temp Max (°C)',
+                    data: tempMaxs,
+                    borderColor: '#ff7675',
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Temp Min (°C)',
+                    data: tempMins,
+                    borderColor: '#74b9ff',
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Regen (mm)',
+                    type: 'bar',
+                    data: rains,
+                    backgroundColor: 'rgba(9, 132, 227, 0.5)',
+                    borderColor: 'rgba(9, 132, 227, 0.8)',
+                    borderWidth: 1,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
+                legend: { 
+                    display: true,
+                    labels: { color: 'rgba(255, 255, 255, 0.9)' }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#1a202c', 
+                    bodyColor: '#1a202c', 
+                    cornerRadius: 8,
+                    padding: 10
+                }
+            },
+            scales: { 
+                x: { 
+                    grid: { color: 'rgba(255,255,255,0.1)' }, 
+                    ticks: { color: 'rgba(255, 255, 255, 0.7)', maxTicksLimit: 14 } 
+                }, 
+                y: { 
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: 'rgba(116, 185, 255, 1)' }
+                }
+            }
+        }
     });
 }
 
