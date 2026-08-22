@@ -1,5 +1,5 @@
 /**
- * Flussschänke Zürich - Reservation API Client
+ * Fluss-Schänke Zürich - Reservation API Client
  */
 
 // Die Google Apps Script Web-App URL (bereits mit dem Backend-Skript backend.gs verknüpft)

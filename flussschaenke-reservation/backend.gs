@@ -1,5 +1,5 @@
 /**
- * Flussschänke Zürich - Backend Google Apps Script
+ * Fluss-Schänke Zürich - Backend Google Apps Script
  *
  * GESCHWINDIGKEITS-ARCHITEKTUR:
  * - Ein zeitgesteuerter Trigger (jede Minute) ruft refreshAvailabilityCache() auf.
@@ -256,10 +256,10 @@ function sendConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
     const formattedDate = formatDateCH(datumStr);
     const betrag = gaeste.length * 50;
     const gastListHtml = gaeste.map(g => `<li><strong>${g.vorname} ${g.nachname}</strong> &ndash; ${g.allergien || 'Keine Einschränkungen'}</li>`).join('');
-    const subject = `Reservation bestätigt – Flussschänke Zürich (${formattedDate})`;
+    const subject = `Reservation bestätigt – Fluss-Schänke Zürich (${formattedDate})`;
     const bodyHtml = `
       <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
-        <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Flussschänke Zürich &middot; Limmatelier</h2>
+        <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
         <p>Wir haben deine Plätze reserviert. Twinte eure Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> (${gaeste.length} &times; CHF 50) innert 48 Stunden. Sobald wir sie bestätigen, bist du bei uns fix auf der Liste.</p>
         <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
           <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${bookingId}</code><br>
@@ -282,10 +282,10 @@ function sendUpdateConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
   try {
     const formattedDate = formatDateCH(datumStr);
     const gastListHtml = gaeste.map(g => `<li><strong>${g.vorname} ${g.nachname}</strong> &ndash; ${g.allergien || 'Keine'}</li>`).join('');
-    const subject = `Reservation aktualisiert – Flussschänke Zürich (${formattedDate})`;
+    const subject = `Reservation aktualisiert – Fluss-Schänke Zürich (${formattedDate})`;
     const bodyHtml = `
       <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
-        <h2 style="color:#A06840;">Flussschänke Zürich &middot; Limmatelier</h2>
+        <h2 style="color:#A06840;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
         <p>Deine Reservation <strong>${bookingId}</strong> für den <strong>${formattedDate}</strong> wurde aktualisiert.</p>
         <h4 style="color:#A06840;">Aktualisierte Gästeliste</h4>
         <ul style="padding-left:20px;line-height:1.7;">${gastListHtml}</ul>
