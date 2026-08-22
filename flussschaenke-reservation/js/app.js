@@ -287,28 +287,55 @@ async function handleReservationSubmit(e) {
     const errorAlert = document.getElementById('booking-error-alert');
     errorAlert?.classList.add('hidden');
 
-    // Backend-Sanitisierung auf alle Inputs anwenden
-    const hauptVorname = sanitizeForBackend(document.getElementById('haupt-vorname')?.value);
-    const hauptNachname = sanitizeForBackend(document.getElementById('haupt-nachname')?.value);
-    const hauptEmail = sanitizeForBackend(document.getElementById('haupt-email')?.value, true);
+    const rawHauptVorname = document.getElementById('haupt-vorname')?.value || '';
+    const rawHauptNachname = document.getElementById('haupt-nachname')?.value || '';
+    const rawHauptEmail = document.getElementById('haupt-email')?.value || '';
 
-    if (!hauptVorname || !hauptNachname || !hauptEmail) {
-        alert('Bitte fülle alle Pflichtfelder des Hauptkontakts (ohne unzulässige Sonderzeichen) aus.');
+    if (!rawHauptVorname.trim() || !rawHauptNachname.trim() || !rawHauptEmail.trim()) {
+        alert('Bitte fülle alle Pflichtfelder des Hauptkontakts aus.');
         return;
     }
 
+    if (hasInvalidCharacters(rawHauptVorname) || hasInvalidCharacters(rawHauptNachname) || hasInvalidCharacters(rawHauptEmail, true)) {
+        if (errorAlert) {
+            errorAlert.textContent = 'Fehler: Unzulässige Sonderzeichen im Hauptkontakt. Bitte nur Standardzeichen verwenden.';
+            errorAlert.classList.remove('hidden');
+        }
+        window.scrollTo({ top: errorAlert.offsetTop - 100, behavior: 'smooth' });
+        return;
+    }
+
+    const hauptVorname = sanitizeForBackend(rawHauptVorname);
+    const hauptNachname = sanitizeForBackend(rawHauptNachname);
+    const hauptEmail = sanitizeForBackend(rawHauptEmail, true);
+
     const gaeste = [];
     for (let i = 0; i < guestCount; i++) {
-        const vorname = sanitizeForBackend(document.getElementById(`gast-vorname-${i}`)?.value);
-        const nachname = sanitizeForBackend(document.getElementById(`gast-nachname-${i}`)?.value);
-        const email = sanitizeForBackend(document.getElementById(`gast-email-${i}`)?.value, true);
-        const allergie = sanitizeForBackend(document.getElementById(`gast-allergie-${i}`)?.value);
-        const detail = sanitizeForBackend(document.getElementById(`gast-detail-${i}`)?.value);
+        const rawVorname = document.getElementById(`gast-vorname-${i}`)?.value || '';
+        const rawNachname = document.getElementById(`gast-nachname-${i}`)?.value || '';
+        const rawEmail = document.getElementById(`gast-email-${i}`)?.value || '';
+        const rawAllergie = document.getElementById(`gast-allergie-${i}`)?.value || '';
+        const rawDetail = document.getElementById(`gast-detail-${i}`)?.value || '';
 
-        if (!vorname || !nachname) {
-            alert(`Bitte gib Vor- und Nachname für Gast ${i + 1} an (Sonderzeichen werden gefiltert).`);
+        if (!rawVorname.trim() || !rawNachname.trim()) {
+            alert(`Bitte gib Vor- und Nachname für Gast ${i + 1} an.`);
             return;
         }
+
+        if (hasInvalidCharacters(rawVorname) || hasInvalidCharacters(rawNachname) || hasInvalidCharacters(rawEmail, true) || hasInvalidCharacters(rawDetail)) {
+            if (errorAlert) {
+                errorAlert.textContent = `Fehler: Unzulässige Sonderzeichen bei Gast ${i + 1}. Bitte nur Standardzeichen verwenden.`;
+                errorAlert.classList.remove('hidden');
+            }
+            window.scrollTo({ top: errorAlert.offsetTop - 100, behavior: 'smooth' });
+            return;
+        }
+
+        const vorname = sanitizeForBackend(rawVorname);
+        const nachname = sanitizeForBackend(rawNachname);
+        const email = sanitizeForBackend(rawEmail, true);
+        const allergie = sanitizeForBackend(rawAllergie);
+        const detail = sanitizeForBackend(rawDetail);
 
         gaeste.push({ vorname, nachname, email, allergien: detail ? `${allergie} (${detail})` : allergie });
     }
@@ -525,13 +552,36 @@ async function handleManageUpdateSubmit(e) {
     alertBox?.classList.add('hidden');
 
     const updatedGaeste = [];
-    document.querySelectorAll('#manage-guests-container .guest-card').forEach(card => {
-        const v = sanitizeForBackend(card.querySelector('.m-vorname')?.value);
-        const n = sanitizeForBackend(card.querySelector('.m-nachname')?.value);
-        const em = sanitizeForBackend(card.querySelector('.m-email')?.value, true);
-        const al = sanitizeForBackend(card.querySelector('.m-allergie')?.value);
-        if (v && n) updatedGaeste.push({ vorname: v, nachname: n, email: em, allergien: al });
+    let hasError = false;
+
+    document.querySelectorAll('#manage-guests-container .guest-card').forEach((card) => {
+        const rawV = card.querySelector('.m-vorname')?.value || '';
+        const rawN = card.querySelector('.m-nachname')?.value || '';
+        const rawEm = card.querySelector('.m-email')?.value || '';
+        const rawAl = card.querySelector('.m-allergie')?.value || '';
+
+        if (hasInvalidCharacters(rawV) || hasInvalidCharacters(rawN) || hasInvalidCharacters(rawEm, true) || hasInvalidCharacters(rawAl)) {
+            hasError = true;
+        }
+
+        if (rawV.trim() && rawN.trim()) {
+            updatedGaeste.push({ 
+                vorname: sanitizeForBackend(rawV), 
+                nachname: sanitizeForBackend(rawN), 
+                email: sanitizeForBackend(rawEm, true), 
+                allergien: sanitizeForBackend(rawAl) 
+            });
+        }
     });
+
+    if (hasError) {
+        if (alertBox) {
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = 'Fehler: Unzulässige Sonderzeichen in den Feldern. Bitte korrigieren.';
+            alertBox.classList.remove('hidden');
+        }
+        return;
+    }
 
     const btn = document.getElementById('btn-submit-update');
     const orig = btn.innerHTML;
@@ -589,10 +639,23 @@ function sanitizeForBackend(str, isEmail = false) {
         // Erlaubt für Emails: a-z, 0-9, @, ., -, _
         val = val.replace(/[^a-zA-Z0-9@.\-_]/g, '');
     } else {
-        // Erlaubt für Namen/Allergien: Buchstaben (inkl. Umlaute), Zahlen, Leerschlag, Bindestrich
-        val = val.replace(/[^a-zA-Z0-9\s\-äöüÄÖÜßéèêàâôûùç]/g, '');
+        // Erlaubt für Namen/Allergien: Buchstaben (inkl. Umlaute), Zahlen, Leerschlag, Bindestrich und &, (, ), ., ,
+        val = val.replace(/[^a-zA-Z0-9\s\-äöüÄÖÜßéèêàâôûùç&(),.]/g, '');
     }
     return val.trim();
+}
+
+function hasInvalidCharacters(str, isEmail = false) {
+    if (!str) return false;
+    // Prüft auf Formula-Injection-Zeichen am Anfang
+    if (/^[=+\-@\s]/.test(str)) return true;
+    
+    if (isEmail) {
+        return /[^a-zA-Z0-9@.\-_]/.test(str);
+    } else {
+        // Prüft, ob ein unerlaubtes Sonderzeichen im Text enthalten ist
+        return /[^a-zA-Z0-9\s\-äöüÄÖÜßéèêàâôûùç&(),.]/.test(str);
+    }
 }
 
 // DOM-Sanitisierung: Extrem schnell, verhindert rudimentäres HTML für Textknoten
