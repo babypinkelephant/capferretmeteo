@@ -343,13 +343,12 @@ async function handleReservationSubmit(e) {
 // SUCCESS VIEW
 // ============================================================
 
+// app.js - Refactored showSuccessView
 function showSuccessView(bookingId, isoDate, email, gaeste) {
-    // Formular-Bereich und Hero-Section ausblenden
     document.getElementById('booking-form-wrapper')?.classList.add('hidden');
     document.querySelector('.hero-section')?.classList.add('hidden');
     document.querySelector('.info-sections')?.classList.add('hidden');
 
-    // Erfolgs-Ansicht direkt unter Header anzeigen
     const sv = document.getElementById('booking-success-view');
     sv?.classList.remove('hidden');
 
@@ -360,16 +359,37 @@ function showSuccessView(bookingId, isoDate, email, gaeste) {
 
     const gl = document.getElementById('success-guest-list');
     if (gl) {
-        gl.innerHTML = gaeste.map((g, i) => `
-            <div style="padding:8px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;">
-                <div><strong>Gast ${i + 1}:</strong> ${escHtml(g.vorname)} ${escHtml(g.nachname)}</div>
-                <div class="text-muted"><em>${escHtml(g.allergien)}</em></div>
-            </div>`).join('');
+        gl.replaceChildren(); // Sicherer und schneller als innerHTML = ''
+
+        gaeste.forEach((g, i) => {
+            const row = document.createElement('div');
+            row.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;';
+
+            const nameDiv = document.createElement('div');
+            const nameStrong = document.createElement('strong');
+            nameStrong.textContent = `Gast ${i + 1}: `;
+            nameDiv.appendChild(nameStrong);
+            // textContent verhindert XSS nativ, escHtml() wird hier nicht mehr zwingend benötigt, schadet aber auch nicht
+            nameDiv.appendChild(document.createTextNode(`${g.vorname} ${g.nachname}`));
+
+            const allergieDiv = document.createElement('div');
+            allergieDiv.className = 'text-muted';
+            const allergieEm = document.createElement('em');
+            allergieEm.textContent = g.allergien;
+            allergieDiv.appendChild(allergieEm);
+
+            row.appendChild(nameDiv);
+            row.appendChild(allergieDiv);
+            gl.appendChild(row);
+        });
     }
 
-    document.getElementById('btn-copy-id').onclick = () => {
-        navigator.clipboard.writeText(bookingId).then(() => alert('Booking-ID kopiert!'));
-    };
+    const btnCopy = document.getElementById('btn-copy-id');
+    if (btnCopy) {
+        btnCopy.onclick = () => {
+            navigator.clipboard.writeText(bookingId).then(() => alert('Booking-ID kopiert!'));
+        };
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -414,6 +434,7 @@ async function handleLookupSubmit(e) {
     }
 }
 
+// app.js - Refactored renderManageView
 function renderManageView(res) {
     document.getElementById('lookup-step')?.classList.add('hidden');
     document.getElementById('manage-edit-step')?.classList.remove('hidden');
@@ -423,29 +444,74 @@ function renderManageView(res) {
 
     const payEl = document.getElementById('manage-payment-status');
     if (payEl && res.paymentInfo) {
+        payEl.replaceChildren();
         const { totalPaid, isFullyPaid } = res.paymentInfo;
         const total = res.gaeste.length;
+
+        const statusSpan = document.createElement('span');
+        statusSpan.style.fontWeight = '700';
+
         if (isFullyPaid) {
-            payEl.innerHTML = `<span style="color:var(--status-success-text);font-weight:700;">Bezahlt (${totalPaid}/${total})</span>`;
+            statusSpan.style.color = 'var(--status-success-text)';
+            statusSpan.textContent = `Bezahlt (${totalPaid}/${total})`;
         } else if (totalPaid > 0) {
-            payEl.innerHTML = `<span style="color:var(--status-warning-text);font-weight:700;">Teilweise bezahlt (${totalPaid}/${total})</span>`;
+            statusSpan.style.color = 'var(--status-warning-text)';
+            statusSpan.textContent = `Teilweise bezahlt (${totalPaid}/${total})`;
         } else {
-            payEl.innerHTML = `<span style="color:var(--status-danger-text);font-weight:700;">Noch nicht bezahlt</span>`;
+            statusSpan.style.color = 'var(--status-danger-text)';
+            statusSpan.textContent = 'Noch nicht bezahlt';
         }
+        payEl.appendChild(statusSpan);
     }
 
     const container = document.getElementById('manage-guests-container');
     if (container) {
-        container.innerHTML = res.gaeste.map((g, i) => `
-            <div class="guest-card mb-2">
-                <h4 style="color:var(--primary-dark);margin-bottom:12px;">Gast ${i + 1}</h4>
-                <div class="form-row">
-                    <div class="form-group"><label>Vorname</label><input type="text" class="m-vorname" value="${escHtml(g.vorname)}" required></div>
-                    <div class="form-group"><label>Nachname</label><input type="text" class="m-nachname" value="${escHtml(g.nachname)}" required></div>
-                    <div class="form-group"><label>E-Mail</label><input type="email" class="m-email" value="${escHtml(g.email)}"></div>
-                </div>
-                <div class="form-group"><label>Allergie / Präferenzen</label><input type="text" class="m-allergie" value="${escHtml(g.allergien)}" required></div>
-            </div>`).join('');
+        container.replaceChildren();
+
+        res.gaeste.forEach((g, i) => {
+            // Container für die Gast-Karte
+            const card = document.createElement('div');
+            card.className = 'guest-card mb-2';
+
+            // Titel
+            const title = document.createElement('h4');
+            title.style.cssText = 'color:var(--primary-dark);margin-bottom:12px;';
+            title.textContent = `Gast ${i + 1}`;
+            card.appendChild(title);
+
+            // Form-Row
+            const row = document.createElement('div');
+            row.className = 'form-row';
+
+            // Hilfsfunktion zur Erstellung von Formularfeldern
+            const createField = (labelTxt, cssClass, type, value, isRequired) => {
+                const group = document.createElement('div');
+                group.className = 'form-group';
+
+                const label = document.createElement('label');
+                label.textContent = labelTxt;
+
+                const input = document.createElement('input');
+                input.type = type;
+                input.className = cssClass;
+                input.value = value; // Zuweisung an .value property ist nativ sicher gegen XSS
+                if (isRequired) input.required = true;
+
+                group.appendChild(label);
+                group.appendChild(input);
+                return group;
+            };
+
+            row.appendChild(createField('Vorname', 'm-vorname', 'text', g.vorname, true));
+            row.appendChild(createField('Nachname', 'm-nachname', 'text', g.nachname, true));
+            row.appendChild(createField('E-Mail', 'm-email', 'email', g.email, false));
+            card.appendChild(row);
+
+            // Allergie / Präferenzen (ganze Breite)
+            card.appendChild(createField('Allergie / Präferenzen', 'm-allergie', 'text', g.allergien, true));
+
+            container.appendChild(card);
+        });
     }
 }
 
