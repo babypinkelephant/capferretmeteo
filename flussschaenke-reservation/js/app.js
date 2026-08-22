@@ -239,10 +239,6 @@ function updateGuestFormCards() {
                             ${PREFERENCE_OPTIONS.map(o => `<option value="${o.value}" ${dA === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="gast-detail-${i}">Zusätzliche Details (optional)</label>
-                        <input type="text" id="gast-detail-${i}" value="${escHtml(dD)}" placeholder="z. B. Schwer allergisch auf Erdnüsse">
-                    </div>
                 </div>
             </div>`;
     }
