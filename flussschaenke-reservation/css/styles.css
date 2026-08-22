@@ -4,37 +4,37 @@
    ========================================================================== */
 
 :root {
-    --bg-page: #FDFBF7;
-    --bg-card: #FFFFFF;
-    --bg-card-subtle: #F9F6F0;
-    --bg-hero: #F4EBE1;
+    --bg-page: #930000;
+    --bg-card: #6B0000;
+    --bg-card-subtle: #7A0000;
+    --bg-hero: #5A0000;
     
-    --primary: #C8956C;
-    --primary-hover: #B8815A;
-    --primary-dark: #A06840;
+    --primary: #F8E10F;
+    --primary-hover: #FFE61A;
+    --primary-dark: #F8E10F;
     
-    --accent-gold: #E9C46A;
-    --accent-gold-light: #FDF9EE;
-    --accent-river: #5C4A3A;
-    --accent-teal: #8A7060;
+    --accent-gold: #F8E10F;
+    --accent-gold-light: #520000;
+    --accent-river: #F8E10F;
+    --accent-teal: #FFE23B;
     
-    --text-main: #4A3828;
-    --text-muted: #8C7060;
-    --text-light: #4A3828;
+    --text-main: #F8E10F;
+    --text-muted: #FFE866;
+    --text-light: #F8E10F;
     
-    --border-color: #EAE0D5;
-    --border-accent: #DDD0C0;
+    --border-color: rgba(248, 225, 15, 0.3);
+    --border-accent: rgba(248, 225, 15, 0.5);
     
-    --status-success-bg: #EDF5EC;
-    --status-success-text: #3D7A4A;
-    --status-warning-bg: #FDF5E6;
-    --status-warning-text: #A06840;
-    --status-danger-bg: #FBEAEA;
-    --status-danger-text: #A04040;
+    --status-success-bg: #2B4D1A;
+    --status-success-text: #F8E10F;
+    --status-warning-bg: #594400;
+    --status-warning-text: #F8E10F;
+    --status-danger-bg: #570C0C;
+    --status-danger-text: #FF7777;
     
-    --shadow-soft: 0 4px 20px rgba(74, 56, 40, 0.05);
-    --shadow-medium: 0 10px 40px rgba(74, 56, 40, 0.08);
-    --shadow-hover: 0 16px 40px rgba(200, 149, 108, 0.15);
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shadow-medium: 0 10px 40px rgba(0, 0, 0, 0.45);
+    --shadow-hover: 0 16px 40px rgba(248, 225, 15, 0.3);
     
     --radius-sm: 8px;
     --radius-md: 14px;
@@ -51,7 +51,7 @@
 }
 
 body {
-    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: 'Bryndan Write', 'Caveat', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", cursive, sans-serif;
     background-color: var(--bg-page);
     color: var(--text-main);
     line-height: 1.6;
@@ -62,7 +62,8 @@ body {
 }
 
 h1, h2, h3, .font-serif {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Bryndan Write', 'Caveat', 'Playfair Display', Georgia, cursive, serif;
+    font-weight: 700;
 }
 
 .container {
@@ -355,12 +356,12 @@ h1, h2, h3, .font-serif {
     transform: translateY(-3px);
     box-shadow: var(--shadow-hover);
     border-color: var(--border-accent);
-    background: #FFF;
+    background: #800000;
 }
 
 .date-card.selected {
-    border-color: var(--primary);
-    background: #FFF;
+    border-color: #F8E10F;
+    background: #8A0000;
     box-shadow: var(--shadow-hover);
 }
 
@@ -476,24 +477,24 @@ select,
 textarea {
     width: 100%;
     padding: 12px 14px;
-    border: 1.5px solid var(--border-color);
+    border: 1.5px solid var(--border-accent);
     border-radius: var(--radius-sm);
     font-size: 0.93rem;
     font-family: inherit;
-    color: var(--text-main);
-    background: #FFF;
+    color: #F8E10F;
+    background: #500000;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
     outline: none;
 }
 
 input:focus, select:focus, textarea:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(200, 149, 108, 0.12);
+    border-color: #F8E10F;
+    box-shadow: 0 0 0 3px rgba(248, 225, 15, 0.25);
 }
 
 /* ========== GUEST CARDS ========== */
 .guest-card {
-    background: #FFF;
+    background: var(--bg-card-subtle);
     border: 1px solid var(--border-accent);
     border-radius: var(--radius-md);
     padding: 20px;
@@ -527,7 +528,7 @@ input:focus, select:focus, textarea:focus {
     padding: 14px 28px;
     border-radius: var(--radius-md);
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.22s ease;
     border: none;
@@ -537,15 +538,16 @@ input:focus, select:focus, textarea:focus {
 }
 
 .btn-primary {
-    background: var(--primary);
-    color: #FFF;
-    box-shadow: 0 4px 16px rgba(200, 149, 108, 0.25);
+    background: #F8E10F;
+    color: #930000;
+    box-shadow: 0 4px 16px rgba(248, 225, 15, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    background: var(--primary-hover);
-    box-shadow: 0 8px 20px rgba(200, 149, 108, 0.3);
+    background: #FFE61A;
+    color: #7A0000;
+    box-shadow: 0 8px 20px rgba(248, 225, 15, 0.45);
 }
 
 .btn-secondary {
@@ -556,6 +558,7 @@ input:focus, select:focus, textarea:focus {
 
 .btn-secondary:hover {
     background: var(--border-color);
+    color: #FFF;
 }
 
 .btn-block { width: 100%; }
@@ -680,7 +683,9 @@ input:focus, select:focus, textarea:focus {
 }
 
 .modal-card {
-    background: #FFF;
+    background: var(--bg-card);
+    border: 1px solid var(--border-accent);
+    color: var(--text-main);
     border-radius: var(--radius-xl);
     max-width: 620px;
     width: 100%;

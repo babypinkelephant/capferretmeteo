@@ -76,10 +76,18 @@ function doGet(e) {
     const action = (e.parameter && e.parameter.action) ? e.parameter.action : 'getAvailability';
 
     if (action === 'getAvailability') {
-      // Immer frisch aus dem Sheet lesen (kein veralteter Cache)
+      const cache = CacheService.getScriptCache();
+      const cachedData = cache.get(CACHE_KEY);
+
+      // 1. Wenn Daten im Cache liegen (z. B. für 30-60s), sofort ausgeben! (Kein Sheet-Zugriff = Kein Rate Limit)
+      if (cachedData) {
+        return outputJSON({ status: 'success', data: JSON.parse(cachedData), source: 'cache' });
+      }
+
+      // 2. Nur wenn Cache abgelaufen ist: frisch aus der Tabelle lesen und Cache erneuern
       const availability = computeAvailabilityFromSheet();
-      // Cache trotzdem befüllen, damit createReservation-Invalidierung konsistent bleibt
-      CacheService.getScriptCache().put(CACHE_KEY, JSON.stringify(availability), CACHE_TTL);
+      cache.put(CACHE_KEY, JSON.stringify(availability), 60); // 60 Sekunden Cache-Dauer
+
       return outputJSON({ status: 'success', data: availability, source: 'sheet' });
     }
 

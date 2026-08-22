@@ -262,7 +262,7 @@ function updateSummary() {
     if (!selectedDate) return;
     document.getElementById('sum-date').textContent = formatDateCH(selectedDate);
     document.getElementById('sum-seats').textContent = `${guestCount} ${guestCount === 1 ? 'Platz' : 'Plätze'}`;
-    document.getElementById('sum-price').textContent = `CHF ${guestCount * 93}.–`;
+    document.getElementById('sum-price').textContent = `CHF ${guestCount * 95}.–`;
     document.getElementById('sum-deposit').textContent = `CHF ${guestCount * 50}.–`;
 }
 

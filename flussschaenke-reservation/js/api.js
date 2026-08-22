@@ -49,21 +49,40 @@ export const api = {
     },
 
     /**
-     * Polling-Mechanismus: Alle 5 Sekunden Verfügbarkeiten abrufen
+     * Polling-Mechanismus: Alle 30 Sekunden Verfügbarkeiten abrufen.
+     * Pausiert automatisch, wenn der Tab nicht sichtbar ist (document.hidden).
      */
     _pollingInterval: null,
     _lastAvailability: null,
+    _visibilityListenerAttached: false,
 
     startPolling(callback) {
-        // Sofort erste Abfrage durchführen
-        this.fetchAvailability(callback);
+        // Sofort erste Abfrage durchführen (falls Tab aktiv)
+        if (!document.hidden) {
+            this.fetchAvailability(callback);
+        }
 
         if (this._pollingInterval) clearInterval(this._pollingInterval);
 
-        // 5-Sekunden Takt
+        // 30-Sekunden Takt
         this._pollingInterval = setInterval(() => {
-            this.fetchAvailability(callback);
-        }, 5000);
+            if (!document.hidden) {
+                this.fetchAvailability(callback);
+            }
+        }, 30000);
+
+        // Event-Listener für Sichtbarkeitswechsel (Spart Server-Ressourcen & Rate Limits)
+        if (!this._visibilityListenerAttached) {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    console.log('Polling pausiert (Tab inaktiv)');
+                } else {
+                    console.log('Tab wieder aktiv: Sofortige Daten-Aktualisierung');
+                    this.fetchAvailability(callback);
+                }
+            });
+            this._visibilityListenerAttached = true;
+        }
     },
 
     stopPolling() {
