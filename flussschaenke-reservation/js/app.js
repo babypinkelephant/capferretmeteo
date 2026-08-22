@@ -14,12 +14,9 @@ const EVENT_DATES = [
 
 const PREFERENCE_OPTIONS = [
     { value: 'Keine Einschränkungen', label: 'Keine Einschränkungen' },
-    { value: 'Vegetarisch', label: 'Vegetarisch' },
-    { value: 'Laktoseintoleranz', label: 'Laktoseintoleranz' },
-    { value: 'Glutenfrei', label: 'Glutenfrei' },
-    { value: 'Nussallergie', label: 'Nussallergie' },
-    { value: 'Kein Fisch / Schalentiere', label: 'Kein Fisch / keine Schalentiere' },
-    { value: 'Sonstiges', label: 'Sonstige Allergie (bitte im Detailfeld angeben)' }
+    { value: 'Kein Fisch', label: 'Kein Fisch' },
+    { value: 'Kein Fleisch', label: 'Kein Fleisch' },
+    { value: 'Kein Fleisch & Fisch', label: 'Kein Fleisch & Fisch' },
 ];
 
 // App-State
