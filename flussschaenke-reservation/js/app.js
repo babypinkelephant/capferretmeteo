@@ -69,8 +69,9 @@ function updateDateCardsAvailability() {
         if (!card || !badge) return;
 
         const info = availabilityData[d.iso];
-        // Immer explizit aus 'booked' berechnen – nie blind dem 'available'-Feld vertrauen
-        const booked = info?.booked ?? 0;
+        // Immer explizit aus 'booked' berechnen – nie blind dem 'available'-Feld vertrauen.
+        // Extrem ressourcenschonende Bereinigung für Polling: parseInt garantiert eine Zahl.
+        const booked = parseInt(info?.booked, 10) || 0;
         const avail = Math.max(0, MAX_SEATS - booked);
 
         if (avail <= 0) {
@@ -286,25 +287,26 @@ async function handleReservationSubmit(e) {
     const errorAlert = document.getElementById('booking-error-alert');
     errorAlert?.classList.add('hidden');
 
-    const hauptVorname = document.getElementById('haupt-vorname')?.value.trim() || '';
-    const hauptNachname = document.getElementById('haupt-nachname')?.value.trim() || '';
-    const hauptEmail = document.getElementById('haupt-email')?.value.trim() || '';
+    // Backend-Sanitisierung auf alle Inputs anwenden
+    const hauptVorname = sanitizeForBackend(document.getElementById('haupt-vorname')?.value);
+    const hauptNachname = sanitizeForBackend(document.getElementById('haupt-nachname')?.value);
+    const hauptEmail = sanitizeForBackend(document.getElementById('haupt-email')?.value, true);
 
     if (!hauptVorname || !hauptNachname || !hauptEmail) {
-        alert('Bitte fülle alle Pflichtfelder des Hauptkontakts aus.');
+        alert('Bitte fülle alle Pflichtfelder des Hauptkontakts (ohne unzulässige Sonderzeichen) aus.');
         return;
     }
 
     const gaeste = [];
     for (let i = 0; i < guestCount; i++) {
-        const vorname = document.getElementById(`gast-vorname-${i}`)?.value.trim() || '';
-        const nachname = document.getElementById(`gast-nachname-${i}`)?.value.trim() || '';
-        const email = document.getElementById(`gast-email-${i}`)?.value.trim() || '';
-        const allergie = document.getElementById(`gast-allergie-${i}`)?.value || 'Keine Einschränkungen';
-        const detail = document.getElementById(`gast-detail-${i}`)?.value.trim() || '';
+        const vorname = sanitizeForBackend(document.getElementById(`gast-vorname-${i}`)?.value);
+        const nachname = sanitizeForBackend(document.getElementById(`gast-nachname-${i}`)?.value);
+        const email = sanitizeForBackend(document.getElementById(`gast-email-${i}`)?.value, true);
+        const allergie = sanitizeForBackend(document.getElementById(`gast-allergie-${i}`)?.value);
+        const detail = sanitizeForBackend(document.getElementById(`gast-detail-${i}`)?.value);
 
         if (!vorname || !nachname) {
-            alert(`Bitte gib Vor- und Nachname für Gast ${i + 1} an.`);
+            alert(`Bitte gib Vor- und Nachname für Gast ${i + 1} an (Sonderzeichen werden gefiltert).`);
             return;
         }
 
@@ -352,10 +354,10 @@ function showSuccessView(bookingId, isoDate, email, gaeste) {
     const sv = document.getElementById('booking-success-view');
     sv?.classList.remove('hidden');
 
-    document.getElementById('success-booking-id').textContent = bookingId;
-    document.getElementById('success-date').textContent = formatDateCH(isoDate);
+    document.getElementById('success-booking-id').textContent = sanitizeForDOM(bookingId);
+    document.getElementById('success-date').textContent = sanitizeForDOM(formatDateCH(isoDate));
     document.getElementById('success-seats').textContent = `${gaeste.length} ${gaeste.length === 1 ? 'Platz' : 'Plätze'}`;
-    document.getElementById('success-email').textContent = email;
+    document.getElementById('success-email').textContent = sanitizeForDOM(email);
 
     const gl = document.getElementById('success-guest-list');
     if (gl) {
@@ -369,13 +371,13 @@ function showSuccessView(bookingId, isoDate, email, gaeste) {
             const nameStrong = document.createElement('strong');
             nameStrong.textContent = `Gast ${i + 1}: `;
             nameDiv.appendChild(nameStrong);
-            // textContent verhindert XSS nativ, escHtml() wird hier nicht mehr zwingend benötigt, schadet aber auch nicht
-            nameDiv.appendChild(document.createTextNode(`${g.vorname} ${g.nachname}`));
+            // textContent verhindert XSS nativ, zusätzliche Sanitisierung zur absoluten Sicherheit
+            nameDiv.appendChild(document.createTextNode(`${sanitizeForDOM(g.vorname)} ${sanitizeForDOM(g.nachname)}`));
 
             const allergieDiv = document.createElement('div');
             allergieDiv.className = 'text-muted';
             const allergieEm = document.createElement('em');
-            allergieEm.textContent = g.allergien;
+            allergieEm.textContent = sanitizeForDOM(g.allergien);
             allergieDiv.appendChild(allergieEm);
 
             row.appendChild(nameDiv);
@@ -439,8 +441,8 @@ function renderManageView(res) {
     document.getElementById('lookup-step')?.classList.add('hidden');
     document.getElementById('manage-edit-step')?.classList.remove('hidden');
 
-    document.getElementById('manage-booking-id').textContent = res.bookingId;
-    document.getElementById('manage-date').textContent = formatDateCH(res.datum);
+    document.getElementById('manage-booking-id').textContent = sanitizeForDOM(res.bookingId);
+    document.getElementById('manage-date').textContent = sanitizeForDOM(formatDateCH(res.datum));
 
     const payEl = document.getElementById('manage-payment-status');
     if (payEl && res.paymentInfo) {
@@ -494,7 +496,7 @@ function renderManageView(res) {
                 const input = document.createElement('input');
                 input.type = type;
                 input.className = cssClass;
-                input.value = value; // Zuweisung an .value property ist nativ sicher gegen XSS
+                input.value = sanitizeForDOM(value); // Zuweisung an .value property kombiniert mit Sanitisierung
                 if (isRequired) input.required = true;
 
                 group.appendChild(label);
@@ -524,10 +526,10 @@ async function handleManageUpdateSubmit(e) {
 
     const updatedGaeste = [];
     document.querySelectorAll('#manage-guests-container .guest-card').forEach(card => {
-        const v = card.querySelector('.m-vorname')?.value.trim() || '';
-        const n = card.querySelector('.m-nachname')?.value.trim() || '';
-        const em = card.querySelector('.m-email')?.value.trim() || '';
-        const al = card.querySelector('.m-allergie')?.value.trim() || '';
+        const v = sanitizeForBackend(card.querySelector('.m-vorname')?.value);
+        const n = sanitizeForBackend(card.querySelector('.m-nachname')?.value);
+        const em = sanitizeForBackend(card.querySelector('.m-email')?.value, true);
+        const al = sanitizeForBackend(card.querySelector('.m-allergie')?.value);
         if (v && n) updatedGaeste.push({ vorname: v, nachname: n, email: em, allergien: al });
     });
 
@@ -575,4 +577,26 @@ function escHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+// Backend-Sanitisierung: Verhindert Formula Injection und filtert Sonderzeichen
+function sanitizeForBackend(str, isEmail = false) {
+    if (!str) return '';
+    let val = String(str);
+    // Verhindere Google Sheets Formel-Injektion (Zellen, die mit = + - @ beginnen)
+    val = val.replace(/^[=+\-@\s]+/g, '');
+    if (isEmail) {
+        // Erlaubt für Emails: a-z, 0-9, @, ., -, _
+        val = val.replace(/[^a-zA-Z0-9@.\-_]/g, '');
+    } else {
+        // Erlaubt für Namen/Allergien: Buchstaben (inkl. Umlaute), Zahlen, Leerschlag, Bindestrich
+        val = val.replace(/[^a-zA-Z0-9\s\-äöüÄÖÜßéèêàâôûùç]/g, '');
+    }
+    return val.trim();
+}
+
+// DOM-Sanitisierung: Extrem schnell, verhindert rudimentäres HTML für Textknoten
+function sanitizeForDOM(str) {
+    if (!str) return '';
+    return String(str).replace(/[<>]/g, '');
 }
