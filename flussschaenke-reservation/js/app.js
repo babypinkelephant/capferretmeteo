@@ -537,7 +537,7 @@ function renderManageView(res) {
             card.appendChild(row);
 
             // Allergie / Präferenzen (ganze Breite)
-            card.appendChild(createField('Allergie / Präferenzen', 'm-allergie', 'text', g.allergien, true));
+            card.appendChild(createField('Präferenzen', 'm-allergie', 'text', g.allergien, true));
 
             container.appendChild(card);
         });
@@ -565,11 +565,11 @@ async function handleManageUpdateSubmit(e) {
         }
 
         if (rawV.trim() && rawN.trim()) {
-            updatedGaeste.push({ 
-                vorname: sanitizeForBackend(rawV), 
-                nachname: sanitizeForBackend(rawN), 
-                email: sanitizeForBackend(rawEm, true), 
-                allergien: sanitizeForBackend(rawAl) 
+            updatedGaeste.push({
+                vorname: sanitizeForBackend(rawV),
+                nachname: sanitizeForBackend(rawN),
+                email: sanitizeForBackend(rawEm, true),
+                allergien: sanitizeForBackend(rawAl)
             });
         }
     });
@@ -649,7 +649,7 @@ function hasInvalidCharacters(str, isEmail = false) {
     if (!str) return false;
     // Prüft auf Formula-Injection-Zeichen am Anfang
     if (/^[=+\-@\s]/.test(str)) return true;
-    
+
     if (isEmail) {
         return /[^a-zA-Z0-9@.\-_]/.test(str);
     } else {
