@@ -196,37 +196,25 @@ export const renderTische = async (container) => {
         });
     };
 
-    document.getElementById('submit-order-btn').addEventListener('click', async (e) => {
+    document.getElementById('submit-order-btn').addEventListener('click', (e) => {
         const activeItems = Object.keys(currentCart).filter(id => currentCart[id] > 0);
         if (activeItems.length === 0) return;
 
-        const btn = e.currentTarget;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="loader" style="border-top-color:#000;"></span>';
-        btn.disabled = true;
-
-        try {
-            const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-            const r = Math.floor(Math.random() * 1000);
+        const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+        const r = Math.floor(Math.random() * 1000);
+        
+        for (const artikelId of activeItems) {
+            const menge = currentCart[artikelId];
+            const menuItem = menuData.find(m => String(m.Artikel_ID) === String(artikelId));
+            const name = menuItem ? menuItem.Name : artikelId;
+            const unitPreis = menuItem ? parseFloat(menuItem.Preis) : 0;
+            const totalPreis = menge * unitPreis;
+            const bestellId = `ORD-${timestampStr}-${r}-${artikelId}`;
             
-            for (const artikelId of activeItems) {
-                const menge = currentCart[artikelId];
-                const menuItem = menuData.find(m => String(m.Artikel_ID) === String(artikelId));
-                const name = menuItem ? menuItem.Name : artikelId;
-                const unitPreis = menuItem ? parseFloat(menuItem.Preis) : 0;
-                const totalPreis = menge * unitPreis;
-                const bestellId = `ORD-${timestampStr}-${r}-${artikelId}`;
-                
-                await api.addOrder(bestellId, currentTisch, name, menge, totalPreis, 'Neu');
-            }
-            
-            closeSheet();
-            alert('Bestellung erfolgreich gesendet!');
-        } catch (error) {
-            alert('Fehler beim Bestellen: ' + error.message);
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            // Optimistic UI dispatch
+            api.addOrder(bestellId, currentTisch, name, menge, totalPreis, 'Neu');
         }
+        
+        closeSheet();
     });
 };

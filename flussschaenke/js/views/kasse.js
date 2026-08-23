@@ -32,6 +32,32 @@ export const renderKasse = async (container) => {
                 <button class="btn btn-success" id="checkout-btn" style="width: 100%;">Abrechnung abschliessen</button>
             </div>
         </div>
+
+        <!-- Payment Selection Modal -->
+        <div class="bottom-sheet-overlay" id="payment-modal-overlay"></div>
+        <div class="bottom-sheet" id="payment-modal-sheet" style="height: auto; max-height: 85vh;">
+            <div class="bottom-sheet-header">
+                <h3>Zahlungsart wählen</h3>
+                <button class="btn btn-primary" id="payment-modal-close" style="width: auto; padding: 8px 16px;">X</button>
+            </div>
+            <div class="bottom-sheet-content text-center">
+                <div id="payment-options-view">
+                    <p class="text-muted mb-3">Wie möchte der Gast bezahlen?</p>
+                    <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+                        <button class="btn btn-primary" id="pay-twint-btn" style="flex: 1; padding: 20px; font-size: 1.1rem; background-color: #0082c3; color: white; border: none;">Twint</button>
+                        <button class="btn btn-primary" id="pay-haus-btn" style="flex: 1; padding: 20px; font-size: 1.1rem; background-color: #5e5ce6; color: white; border: none;">Aufs Haus</button>
+                    </div>
+                </div>
+
+                <div id="twint-qr-view" class="hidden">
+                    <p class="text-muted mb-2">Twint QR-Code scannen:</p>
+                    <div style="background: white; padding: 16px; border-radius: 16px; display: inline-block; margin-bottom: 20px;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=TwintPaymentPlaceholder" alt="Twint QR Code" style="width: 200px; height: 200px; display: block;">
+                    </div>
+                    <button class="btn btn-success" id="pay-twint-confirm-btn" style="width: 100%; padding: 16px; font-size: 1.1rem;">Bezahlt</button>
+                </div>
+            </div>
+        </div>
     `;
 
     let allOrders = [];
@@ -83,11 +109,17 @@ export const renderKasse = async (container) => {
         renderList(newOrders);
     });
 
-    api.fetchOrders().catch(e => console.error(e));
+    api.fetchOrders().catch(e => console.error('Error fetching orders:', e));
 
     const overlay = document.getElementById('checkout-overlay');
     const sheet = document.getElementById('checkout-sheet');
     const closeBtn = document.getElementById('checkout-close');
+
+    const paymentOverlay = document.getElementById('payment-modal-overlay');
+    const paymentSheet = document.getElementById('payment-modal-sheet');
+    const paymentCloseBtn = document.getElementById('payment-modal-close');
+    const paymentOptionsView = document.getElementById('payment-options-view');
+    const twintQrView = document.getElementById('twint-qr-view');
 
     const closeSheet = () => {
         overlay.classList.remove('active');
@@ -95,7 +127,15 @@ export const renderKasse = async (container) => {
         currentTisch = null;
     };
 
+    const closePaymentModal = () => {
+        paymentOverlay.classList.remove('active');
+        paymentSheet.classList.remove('active');
+        twintQrView.classList.add('hidden');
+        paymentOptionsView.classList.remove('hidden');
+    };
+
     closeBtn.addEventListener('click', closeSheet);
+    paymentCloseBtn.addEventListener('click', closePaymentModal);
 
     const calcTotal = () => {
         let total = 0;
@@ -146,12 +186,14 @@ export const renderKasse = async (container) => {
         
         document.getElementById('checkout-items').innerHTML = itemsHtml;
         
-        // Listeners for adjustments
+        // Listeners for adjustments (Optimistic UI)
         document.querySelectorAll('.adjust-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
+            btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
                 const action = e.currentTarget.dataset.action;
                 const order = currentTableOrders.find(o => (o.Bestell_ID || o.id || o.bestellId) === id);
+                if (!order) return;
+
                 let newMenge = parseInt(order.Menge || order.menge);
                 
                 if (action === 'plus') newMenge++;
@@ -159,20 +201,17 @@ export const renderKasse = async (container) => {
                 
                 if (newMenge < 0) newMenge = 0;
                 
-                e.currentTarget.disabled = true;
-                try {
-                    await api.updateOrderMenge(id, newMenge);
-                    // Update locally
-                    if (newMenge === 0) {
-                        currentTableOrders = currentTableOrders.filter(o => (o.Bestell_ID || o.id || o.bestellId) !== id);
-                    } else {
-                        order.Menge = newMenge;
-                        order.menge = newMenge;
-                    }
-                    renderSheetItems();
-                } catch (error) {
-                    alert('Fehler beim Anpassen: ' + error.message);
+                // Optimistic UI Update
+                if (newMenge === 0) {
+                    currentTableOrders = currentTableOrders.filter(o => (o.Bestell_ID || o.id || o.bestellId) !== id);
+                } else {
+                    order.Menge = newMenge;
+                    order.menge = newMenge;
                 }
+                renderSheetItems();
+
+                // Background API call
+                api.updateOrderMenge(id, newMenge);
             });
         });
 
@@ -204,43 +243,59 @@ export const renderKasse = async (container) => {
         sheet.classList.add('active');
     };
 
-    document.getElementById('checkout-btn').addEventListener('click', async (e) => {
-        const btn = e.currentTarget;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="loader"></span>';
-        btn.disabled = true;
+    // Abrechnung abschliessen -> Öffnet Zahlungsart Modal
+    document.getElementById('checkout-btn').addEventListener('click', () => {
+        paymentOptionsView.classList.remove('hidden');
+        twintQrView.classList.add('hidden');
+        paymentOverlay.classList.add('active');
+        paymentSheet.classList.add('active');
+    });
 
-        try {
-            // Process payments
-            const payInputs = document.querySelectorAll('.pay-qty');
-            for (const input of payInputs) {
-                const id = input.dataset.id;
-                const payMenge = parseInt(input.value);
-                const totalMenge = parseInt(input.dataset.menge);
-                
-                if (payMenge === 0) continue;
-                
-                if (payMenge === totalMenge) {
-                    await api.updateOrderStatus(id, 'Bezahlt');
-                } else if (payMenge > 0 && payMenge < totalMenge) {
-                    await api.splitOrder(id, payMenge);
-                }
+    // Hilfsfunktion zur Durchführung des Checkouts (Optimistic UI)
+    const executeCheckout = (zahlungsart) => {
+        const payInputs = document.querySelectorAll('.pay-qty');
+        
+        for (const input of payInputs) {
+            const id = input.dataset.id;
+            const payMenge = parseInt(input.value);
+            const totalMenge = parseInt(input.dataset.menge);
+            
+            if (payMenge === 0) continue;
+            
+            if (payMenge === totalMenge) {
+                api.updateOrderStatus(id, 'Bezahlt', zahlungsart);
+            } else if (payMenge > 0 && payMenge < totalMenge) {
+                api.splitOrder(id, payMenge, zahlungsart);
             }
-
-            const tip = parseFloat(document.getElementById('checkout-tip').value) || 0;
-            if (tip > 0) {
-                const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-                const r = Math.floor(Math.random() * 1000);
-                const tipId = `ORD-${timestampStr}-${r}-TIP`;
-                await api.addOrder(tipId, currentTisch, 'Trinkgeld', 1, tip, 'Bezahlt');
-            }
-
-            closeSheet();
-            await loadData(); // Reload entire view
-        } catch (error) {
-            alert('Fehler bei der Abrechnung: ' + error.message);
-            btn.innerHTML = originalText;
-            btn.disabled = false;
         }
+
+        const tip = parseFloat(document.getElementById('checkout-tip').value) || 0;
+        if (tip > 0) {
+            const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+            const r = Math.floor(Math.random() * 1000);
+            const tipId = `ORD-${timestampStr}-${r}-TIP`;
+            api.addOrder(tipId, currentTisch, 'Trinkgeld', 1, tip, 'Bezahlt', zahlungsart);
+        }
+
+        // Instantes Feedback & Modale schließen
+        closePaymentModal();
+        closeSheet();
+    };
+
+    // Klick auf "Aufs Haus"
+    document.getElementById('pay-haus-btn').addEventListener('click', () => {
+        executeCheckout('Haus');
+    });
+
+    // Klick auf "Twint" -> Zeige QR Code
+    document.getElementById('pay-twint-btn').addEventListener('click', () => {
+        paymentOptionsView.classList.add('hidden');
+        twintQrView.classList.remove('hidden');
+    });
+
+    // Klick auf "Bezahlt" unter Twint QR Code
+    document.getElementById('pay-twint-confirm-btn').addEventListener('click', () => {
+        executeCheckout('Twint');
     });
 };
+

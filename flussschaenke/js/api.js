@@ -9,8 +9,17 @@ export const api = {
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action, ...payload })
             });
-            if (!response.ok) throw new Error('Network error');
-            const data = await response.json();
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+            
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error(`API POST JSON Parse Error [${action}]:`, text);
+                throw new Error('Ungültiges Antwortformat vom Server');
+            }
+
             if (data.status === 'error') throw new Error(data.message || 'API Error');
             return data;
         } catch (error) {
@@ -28,8 +37,17 @@ export const api = {
             const response = await fetch(url.toString(), {
                 method: 'GET'
             });
-            if (!response.ok) throw new Error('Network error');
-            const data = await response.json();
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error(`API GET JSON Parse Error [${action}]:`, text);
+                throw new Error('Ungültiges Antwortformat vom Server');
+            }
+
             if (data.status === 'error') throw new Error(data.message || 'API Error');
             return data;
         } catch (error) {
@@ -52,13 +70,13 @@ export const api = {
         this._subscribers.forEach(cb => cb(this._orders));
     },
 
-    // Start polling every 60 seconds
+    // Start polling every 5 seconds
     startPolling() {
         if (this._pollingInterval) return;
         this.fetchOrders(); // initial fetch
         this._pollingInterval = setInterval(() => {
             this.fetchOrders();
-        }, 5000); // every 5 seconds
+        }, 5000);
     },
 
     async fetchOrders() {
@@ -76,23 +94,29 @@ export const api = {
         return this.post('login', { email, password });
     },
     getOrders(status) {
-        // Fallback for direct getOrders call
         return this.get('getOrders', { status });
     },
-    async addOrder(bestellId, tischNr, name, menge, preis, status) {
+    async addOrder(bestellId, tischNr, name, menge, preis, status, zahlungsart = '') {
         // Optimistic update
-        this._orders.push({ Bestell_ID: bestellId, Tisch_Nr: tischNr, Name: name, Menge: menge, Preis: preis, Status: status });
+        this._orders.push({ Bestell_ID: bestellId, Tisch_Nr: tischNr, Name: name, Menge: menge, Preis: preis, Status: status, Zahlungsart: zahlungsart });
         this._notifySubscribers();
-        const res = await this.post('addOrder', { bestellId, tischNr, name, menge, preis, status });
-        this.fetchOrders();
-        return res;
+        
+        // Asynchronous background POST without blocking caller if desired
+        this.post('addOrder', { bestellId, tischNr, name, menge, preis, status, zahlungsart })
+            .then(() => this.fetchOrders())
+            .catch(err => console.error('Error background addOrder:', err));
     },
-    async updateOrderStatus(bestellId, neuerStatus) {
+    async updateOrderStatus(bestellId, neuerStatus, zahlungsart = '') {
         const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
-        if (order) { order.Status = neuerStatus; this._notifySubscribers(); }
-        const res = await this.post('updateOrderStatus', { bestellId, neuerStatus });
-        this.fetchOrders();
-        return res;
+        if (order) { 
+            order.Status = neuerStatus; 
+            if (zahlungsart) order.Zahlungsart = zahlungsart;
+            this._notifySubscribers(); 
+        }
+
+        this.post('updateOrderStatus', { bestellId, neuerStatus, zahlungsart })
+            .then(() => this.fetchOrders())
+            .catch(err => console.error('Error background updateOrderStatus:', err));
     },
     async updateOrderMenge(bestellId, neueMenge) {
         const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
@@ -101,11 +125,12 @@ export const api = {
             else { order.Menge = neueMenge; }
             this._notifySubscribers();
         }
-        const res = await this.post('updateOrderMenge', { bestellId, neueMenge });
-        this.fetchOrders();
-        return res;
+
+        this.post('updateOrderMenge', { bestellId, neueMenge })
+            .then(() => this.fetchOrders())
+            .catch(err => console.error('Error background updateOrderMenge:', err));
     },
-    async splitOrder(bestellId, mengeZumBezahlen) {
+    async splitOrder(bestellId, mengeZumBezahlen, zahlungsart = '') {
         const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
         if (order) {
             const oldMenge = parseInt(order.Menge) || 1;
@@ -116,13 +141,15 @@ export const api = {
                 Tisch_Nr: order.Tisch_Nr,
                 Name: order.Name,
                 Menge: bezahlMenge,
-                Status: 'Bezahlt'
+                Status: 'Bezahlt',
+                Zahlungsart: zahlungsart
             });
             this._notifySubscribers();
         }
-        const res = await this.post('splitOrder', { bestellId, mengeZumBezahlen });
-        this.fetchOrders();
-        return res;
+
+        this.post('splitOrder', { bestellId, mengeZumBezahlen, zahlungsart })
+            .then(() => this.fetchOrders())
+            .catch(err => console.error('Error background splitOrder:', err));
     },
     checkout(tischNr, trinkgeld) {
         // Will be deprecated in frontend by splitOrder, but keeping it just in case

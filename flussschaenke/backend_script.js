@@ -1,3 +1,4 @@
+const SPREADSHEET_ID = '1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE';
 // Hilfsfunktion: Gibt JSON saubere Antworten inklusive CORS-Header zurück
 function outputJSON(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
@@ -48,12 +49,12 @@ function doPost(e) {
 
     // 1. NEUE BESTELLUNG HINZUFÜGEN
     if (action === 'addOrder') {
-      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Bestellungen');
+      const sheet = SpreadsheetApp.openById("1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE").getSheetByName('Bestellungen');
       if (!sheet) throw new Error('Blatt Bestellungen nicht gefunden');
       
       const timestamp = new Date().toISOString();
       
-      // Aufbau der Zeile: [Bestell_ID, Tisch_Nr, Name, Menge, Preis, Status, Zeitstempel]
+      // Aufbau der Zeile: [Bestell_ID, Tisch_Nr, Name, Menge, Preis, Status, Zeitstempel, Zahlungsart]
       sheet.appendRow([
         data.bestellId,
         data.tischNr,
@@ -61,7 +62,8 @@ function doPost(e) {
         data.menge,
         data.preis || '',
         data.status || 'Neu',
-        timestamp
+        timestamp,
+        data.zahlungsart || ''
       ]);
       
       return outputJSON({ status: 'success' });
@@ -69,12 +71,15 @@ function doPost(e) {
 
     // 2. STATUS AKTUALISIEREN (z.B. Neu -> Serviert, oder Serviert -> Bezahlt)
     if (action === 'updateOrderStatus') {
-      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Bestellungen');
+      const sheet = SpreadsheetApp.openById("1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE").getSheetByName('Bestellungen');
       const rowIdx = findRowIndexByOrderId(sheet, data.bestellId);
       
       if (rowIdx > -1) {
-        // Spalte 6 = Status (A=1, B=2, C=3, D=4, E=5 Preis, F=6 Status)
+        // Spalte 6 = Status (A=1, B=2, C=3, D=4, E=5 Preis, F=6 Status, G=7 Zeitstempel, H=8 Zahlungsart)
         sheet.getRange(rowIdx, 6).setValue(data.neuerStatus);
+        if (data.zahlungsart) {
+          sheet.getRange(rowIdx, 8).setValue(data.zahlungsart);
+        }
         return outputJSON({ status: 'success' });
       } else {
         return outputJSON({ status: 'error', message: 'Bestellung nicht gefunden' });
@@ -83,7 +88,7 @@ function doPost(e) {
 
     // 3. MENGE KORRIGIEREN (+ / - in der Kasse)
     if (action === 'updateOrderMenge') {
-      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Bestellungen');
+      const sheet = SpreadsheetApp.openById("1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE").getSheetByName('Bestellungen');
       const rowIdx = findRowIndexByOrderId(sheet, data.bestellId);
       
       if (rowIdx > -1) {
@@ -109,7 +114,7 @@ function doPost(e) {
 
     // 4. TEILRECHNUNG (Bestellung splitten)
     if (action === 'splitOrder') {
-      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Bestellungen');
+      const sheet = SpreadsheetApp.openById("1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE").getSheetByName('Bestellungen');
       const dataRange = sheet.getDataRange().getValues();
       const headers = dataRange[0];
       const idIndex = headers.indexOf('Bestell_ID');
@@ -133,13 +138,14 @@ function doPost(e) {
         
         const mengeZumBezahlen = parseInt(data.mengeZumBezahlen);
         const restMenge = alteMenge - mengeZumBezahlen;
+        const zahlungsart = data.zahlungsart || '';
         
         if (restMenge > 0) {
           // 1. Passe alte Zeile an (Restmenge und Restpreis)
           sheet.getRange(rowIdx, 4).setValue(restMenge);
           sheet.getRange(rowIdx, 5).setValue(restMenge * unitPrice);
           
-          // 2. Füge neue Zeile ein für den bezahlten Teil (mit anteiligem Preis)
+          // 2. Füge neue Zeile ein für den bezahlten Teil (mit anteiligem Preis & Zahlungsart)
           const splitId = data.bestellId + "-S" + Math.floor(Math.random()*1000);
           sheet.appendRow([
             splitId,
@@ -148,11 +154,15 @@ function doPost(e) {
             mengeZumBezahlen,
             mengeZumBezahlen * unitPrice,
             'Bezahlt',
-            new Date().toISOString()
+            new Date().toISOString(),
+            zahlungsart
           ]);
         } else {
           // Alles wird bezahlt
           sheet.getRange(rowIdx, 6).setValue('Bezahlt');
+          if (zahlungsart) {
+            sheet.getRange(rowIdx, 8).setValue(zahlungsart);
+          }
         }
         return outputJSON({ status: 'success' });
       } else {
@@ -181,7 +191,7 @@ function findRowIndexByOrderId(sheet, orderId) {
 
 // Hilfsfunktion: Liest ein Blatt als Array von Objekten aus
 function getSheetData(sheetName) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  const sheet = SpreadsheetApp.openById("1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE").getSheetByName(sheetName);
   if (!sheet) return [];
   
   const data = sheet.getDataRange().getValues();
@@ -204,10 +214,11 @@ function getSheetData(sheetName) {
 
 // Hilfsfunktion: Liest Reservationen aus "Reservationen Overview" strukturiert aus
 function getReservationsData() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Reservationen Overview');
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Reservationen Overview');
   if (!sheet) return {};
   
-  const data = sheet.getDataRange().getValues();
+  // WICHTIG: getDisplayValues() holt den exakten Text (Strings) aus den Zellen, nicht die rohen Date-Objekte
+  const data = sheet.getDataRange().getDisplayValues();
   const result = {};
   
   const dateRegex = /\d{1,2}\.\d{1,2}\.\d{4}/;
