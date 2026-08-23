@@ -1,11 +1,35 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbwah_srqE5m6G6d3yYHCHi6r07PqNDcoV2haR3sJ1ZmEofZwSgxvas_CgOCd3RpJW_RyQ/exec';
 
 export const api = {
+    // Background Queue Handling (Strictly Sequential Execution to prevent GAS Rate Limits)
+    _queue: [],
+    _isProcessingQueue: false,
+
+    _enqueue(task) {
+        this._queue.push(task);
+        this._processQueue();
+    },
+
+    async _processQueue() {
+        if (this._isProcessingQueue) return;
+        this._isProcessingQueue = true;
+
+        while (this._queue.length > 0) {
+            const task = this._queue.shift();
+            try {
+                await task();
+            } catch (err) {
+                console.error('Queue task error:', err);
+            }
+        }
+
+        this._isProcessingQueue = false;
+    },
+
     async post(action, payload = {}) {
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
-                // text/plain avoids CORS preflight OPTIONS requests that GAS doesn't handle well
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action, ...payload })
             });
@@ -96,17 +120,39 @@ export const api = {
     getOrders(status) {
         return this.get('getOrders', { status });
     },
-    async addOrder(bestellId, tischNr, name, menge, preis, status, zahlungsart = '') {
+    addOrder(bestellId, tischNr, name, menge, preis, status, zahlungsart = '') {
         // Optimistic update
         this._orders.push({ Bestell_ID: bestellId, Tisch_Nr: tischNr, Name: name, Menge: menge, Preis: preis, Status: status, Zahlungsart: zahlungsart });
         this._notifySubscribers();
         
-        // Asynchronous background POST without blocking caller if desired
-        this.post('addOrder', { bestellId, tischNr, name, menge, preis, status, zahlungsart })
-            .then(() => this.fetchOrders())
-            .catch(err => console.error('Error background addOrder:', err));
+        // Enqueue task for sequential background POST
+        this._enqueue(async () => {
+            await this.post('addOrder', { bestellId, tischNr, name, menge, preis, status, zahlungsart });
+            await this.fetchOrders();
+        });
     },
-    async updateOrderStatus(bestellId, neuerStatus, zahlungsart = '') {
+    addMultipleOrders(ordersList) {
+        // Optimistic update for all orders in batch
+        ordersList.forEach(o => {
+            this._orders.push({
+                Bestell_ID: o.bestellId,
+                Tisch_Nr: o.tischNr,
+                Name: o.name,
+                Menge: o.menge,
+                Preis: o.preis,
+                Status: o.status || 'Neu',
+                Zahlungsart: o.zahlungsart || ''
+            });
+        });
+        this._notifySubscribers();
+
+        // Enqueue single BATCH request to backend
+        this._enqueue(async () => {
+            await this.post('addMultipleOrders', { orders: ordersList });
+            await this.fetchOrders();
+        });
+    },
+    updateOrderStatus(bestellId, neuerStatus, zahlungsart = '') {
         const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
         if (order) { 
             order.Status = neuerStatus; 
@@ -114,11 +160,12 @@ export const api = {
             this._notifySubscribers(); 
         }
 
-        this.post('updateOrderStatus', { bestellId, neuerStatus, zahlungsart })
-            .then(() => this.fetchOrders())
-            .catch(err => console.error('Error background updateOrderStatus:', err));
+        this._enqueue(async () => {
+            await this.post('updateOrderStatus', { bestellId, neuerStatus, zahlungsart });
+            await this.fetchOrders();
+        });
     },
-    async updateOrderMenge(bestellId, neueMenge) {
+    updateOrderMenge(bestellId, neueMenge) {
         const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
         if (order) {
             if (neueMenge === 0) { order.Menge = 0; order.Status = 'Storniert'; }
@@ -126,11 +173,12 @@ export const api = {
             this._notifySubscribers();
         }
 
-        this.post('updateOrderMenge', { bestellId, neueMenge })
-            .then(() => this.fetchOrders())
-            .catch(err => console.error('Error background updateOrderMenge:', err));
+        this._enqueue(async () => {
+            await this.post('updateOrderMenge', { bestellId, neueMenge });
+            await this.fetchOrders();
+        });
     },
-    async splitOrder(bestellId, mengeZumBezahlen, zahlungsart = '') {
+    splitOrder(bestellId, mengeZumBezahlen, zahlungsart = '') {
         const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
         if (order) {
             const oldMenge = parseInt(order.Menge) || 1;
@@ -147,9 +195,10 @@ export const api = {
             this._notifySubscribers();
         }
 
-        this.post('splitOrder', { bestellId, mengeZumBezahlen, zahlungsart })
-            .then(() => this.fetchOrders())
-            .catch(err => console.error('Error background splitOrder:', err));
+        this._enqueue(async () => {
+            await this.post('splitOrder', { bestellId, mengeZumBezahlen, zahlungsart });
+            await this.fetchOrders();
+        });
     },
     checkout(tischNr, trinkgeld) {
         // Will be deprecated in frontend by splitOrder, but keeping it just in case

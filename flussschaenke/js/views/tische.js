@@ -203,6 +203,7 @@ export const renderTische = async (container) => {
         const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
         const r = Math.floor(Math.random() * 1000);
         
+        const ordersToSubmit = [];
         for (const artikelId of activeItems) {
             const menge = currentCart[artikelId];
             const menuItem = menuData.find(m => String(m.Artikel_ID) === String(artikelId));
@@ -211,9 +212,18 @@ export const renderTische = async (container) => {
             const totalPreis = menge * unitPreis;
             const bestellId = `ORD-${timestampStr}-${r}-${artikelId}`;
             
-            // Optimistic UI dispatch
-            api.addOrder(bestellId, currentTisch, name, menge, totalPreis, 'Neu');
+            ordersToSubmit.push({
+                bestellId,
+                tischNr: currentTisch,
+                name,
+                menge,
+                preis: totalPreis,
+                status: 'Neu'
+            });
         }
+        
+        // Single batch call with Optimistic UI
+        api.addMultipleOrders(ordersToSubmit);
         
         closeSheet();
     });

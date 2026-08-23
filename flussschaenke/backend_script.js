@@ -69,6 +69,34 @@ function doPost(e) {
       return outputJSON({ status: 'success' });
     }
 
+    // 1b. MEHRERE BESTELLUNGEN AUF EINMAL HINZUFÜGEN (BATCH)
+    if (action === 'addMultipleOrders') {
+      const sheet = SpreadsheetApp.openById("1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE").getSheetByName('Bestellungen');
+      if (!sheet) throw new Error('Blatt Bestellungen nicht gefunden');
+      
+      const orders = data.orders || [];
+      const timestamp = new Date().toISOString();
+      
+      const rows = orders.map(function(o) {
+        return [
+          o.bestellId,
+          o.tischNr,
+          o.name,
+          o.menge,
+          o.preis || '',
+          o.status || 'Neu',
+          timestamp,
+          o.zahlungsart || ''
+        ];
+      });
+
+      if (rows.length > 0) {
+        sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+      }
+      
+      return outputJSON({ status: 'success' });
+    }
+
     // 2. STATUS AKTUALISIEREN (z.B. Neu -> Serviert, oder Serviert -> Bezahlt)
     if (action === 'updateOrderStatus') {
       const sheet = SpreadsheetApp.openById("1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE").getSheetByName('Bestellungen');
