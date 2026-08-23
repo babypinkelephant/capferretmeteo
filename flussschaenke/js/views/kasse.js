@@ -251,9 +251,10 @@ export const renderKasse = async (container) => {
         paymentSheet.classList.add('active');
     });
 
-    // Hilfsfunktion zur Durchführung des Checkouts (Optimistic UI)
+    // Hilfsfunktion zur Durchführung des Checkouts (Optimistic UI & Single Batch Request)
     const executeCheckout = (zahlungsart) => {
         const payInputs = document.querySelectorAll('.pay-qty');
+        const updates = [];
         
         for (const input of payInputs) {
             const id = input.dataset.id;
@@ -263,18 +264,33 @@ export const renderKasse = async (container) => {
             if (payMenge === 0) continue;
             
             if (payMenge === totalMenge) {
-                api.updateOrderStatus(id, 'Bezahlt', zahlungsart);
+                updates.push({
+                    bestellId: id,
+                    neuerStatus: 'Bezahlt',
+                    zahlungsart: zahlungsart
+                });
             } else if (payMenge > 0 && payMenge < totalMenge) {
-                api.splitOrder(id, payMenge, zahlungsart);
+                updates.push({
+                    bestellId: id,
+                    neuerStatus: 'Bezahlt',
+                    splitMenge: payMenge,
+                    zahlungsart: zahlungsart
+                });
             }
         }
 
         const tip = parseFloat(document.getElementById('checkout-tip').value) || 0;
+        let tipData = null;
         if (tip > 0) {
-            const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-            const r = Math.floor(Math.random() * 1000);
-            const tipId = `ORD-${timestampStr}-${r}-TIP`;
-            api.addOrder(tipId, currentTisch, 'Trinkgeld', 1, tip, 'Bezahlt', zahlungsart);
+            tipData = {
+                tischNr: currentTisch,
+                preis: tip,
+                zahlungsart: zahlungsart
+            };
+        }
+
+        if (updates.length > 0 || tipData) {
+            api.updateMultipleOrderStatuses(updates, tipData);
         }
 
         // Instantes Feedback & Modale schließen

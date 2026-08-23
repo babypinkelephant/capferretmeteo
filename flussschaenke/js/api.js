@@ -165,6 +165,52 @@ export const api = {
             await this.fetchOrders();
         });
     },
+    updateMultipleOrderStatuses(updates, tipData = null) {
+        // Optimistic local state update
+        updates.forEach(u => {
+            const order = this._orders.find(o => o.Bestell_ID === u.bestellId || o.id === u.bestellId);
+            if (order) {
+                if (u.splitMenge && parseInt(u.splitMenge) > 0) {
+                    const oldMenge = parseInt(order.Menge) || 1;
+                    const bezahlMenge = parseInt(u.splitMenge) || 1;
+                    order.Menge = Math.max(0, oldMenge - bezahlMenge);
+                    this._orders.push({
+                        Bestell_ID: u.bestellId + '-S',
+                        Tisch_Nr: order.Tisch_Nr,
+                        Name: order.Name,
+                        Menge: bezahlMenge,
+                        Status: u.neuerStatus || 'Bezahlt',
+                        Zahlungsart: u.zahlungsart || ''
+                    });
+                } else {
+                    if (u.neuerStatus) order.Status = u.neuerStatus;
+                    if (u.zahlungsart) order.Zahlungsart = u.zahlungsart;
+                }
+            }
+        });
+
+        if (tipData && tipData.preis > 0) {
+            const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+            const r = Math.floor(Math.random() * 1000);
+            this._orders.push({
+                Bestell_ID: `ORD-${timestampStr}-${r}-TIP`,
+                Tisch_Nr: tipData.tischNr,
+                Name: 'Trinkgeld',
+                Menge: 1,
+                Preis: tipData.preis,
+                Status: 'Bezahlt',
+                Zahlungsart: tipData.zahlungsart || ''
+            });
+        }
+
+        this._notifySubscribers();
+
+        // Single batch API request enqueued
+        this._enqueue(async () => {
+            await this.post('updateMultipleOrderStatuses', { updates, tip: tipData });
+            await this.fetchOrders();
+        });
+    },
     updateOrderMenge(bestellId, neueMenge) {
         const order = this._orders.find(o => o.Bestell_ID === bestellId || o.id === bestellId);
         if (order) {

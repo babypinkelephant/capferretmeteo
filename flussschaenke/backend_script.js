@@ -114,6 +114,89 @@ function doPost(e) {
       }
     }
 
+    // 2b. MEHRERE STATUS AKTUALISIEREN / CHECKOUT (BATCH)
+    if (action === 'updateMultipleOrderStatuses') {
+      const sheet = SpreadsheetApp.openById("1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE").getSheetByName('Bestellungen');
+      if (!sheet) throw new Error('Blatt Bestellungen nicht gefunden');
+
+      const updates = data.updates || []; // [{ bestellId, neuerStatus, zahlungsart, splitMenge, addTip: { tischNr, preis } }]
+      const dataRange = sheet.getDataRange().getValues();
+      const headers = dataRange[0];
+      const idIndex = headers.indexOf('Bestell_ID');
+
+      // Map für schnellen Zeilen-Lookup
+      const rowMap = {};
+      for (let i = 1; i < dataRange.length; i++) {
+        rowMap[dataRange[i][idIndex]] = { rowIdx: i + 1, rowData: dataRange[i] };
+      }
+
+      const rowsToAdd = [];
+
+      updates.forEach(function(u) {
+        const item = rowMap[u.bestellId];
+        if (item) {
+          const rowIdx = item.rowIdx;
+          const rowData = item.rowData;
+
+          if (u.splitMenge && parseInt(u.splitMenge) > 0) {
+            // Split Logik
+            const alterGesamtPreis = parseFloat(rowData[headers.indexOf('Preis')]) || 0;
+            const alteMenge = parseInt(rowData[headers.indexOf('Menge')]) || 1;
+            const unitPrice = alterGesamtPreis / alteMenge;
+            const mengeZumBezahlen = parseInt(u.splitMenge);
+            const restMenge = alteMenge - mengeZumBezahlen;
+            const zahlungsart = u.zahlungsart || '';
+
+            if (restMenge > 0) {
+              sheet.getRange(rowIdx, 4).setValue(restMenge);
+              sheet.getRange(rowIdx, 5).setValue(restMenge * unitPrice);
+
+              const splitId = u.bestellId + "-S" + Math.floor(Math.random()*1000);
+              rowsToAdd.push([
+                splitId,
+                rowData[headers.indexOf('Tisch_Nr')],
+                rowData[headers.indexOf('Name')],
+                mengeZumBezahlen,
+                mengeZumBezahlen * unitPrice,
+                u.neuerStatus || 'Bezahlt',
+                new Date().toISOString(),
+                zahlungsart
+              ]);
+            } else {
+              sheet.getRange(rowIdx, 6).setValue(u.neuerStatus || 'Bezahlt');
+              if (zahlungsart) sheet.getRange(rowIdx, 8).setValue(zahlungsart);
+            }
+          } else {
+            // Normaler Status Update
+            if (u.neuerStatus) sheet.getRange(rowIdx, 6).setValue(u.neuerStatus);
+            if (u.zahlungsart) sheet.getRange(rowIdx, 8).setValue(u.zahlungsart);
+          }
+        }
+      });
+
+      // Falls Trinkgeld dabei ist
+      if (data.tip && data.tip.preis > 0) {
+        const timestampStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+        const r = Math.floor(Math.random() * 1000);
+        rowsToAdd.push([
+          `ORD-${timestampStr}-${r}-TIP`,
+          data.tip.tischNr,
+          'Trinkgeld',
+          1,
+          data.tip.preis,
+          'Bezahlt',
+          new Date().toISOString(),
+          data.tip.zahlungsart || ''
+        ]);
+      }
+
+      if (rowsToAdd.length > 0) {
+        sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAdd.length, rowsToAdd[0].length).setValues(rowsToAdd);
+      }
+
+      return outputJSON({ status: 'success' });
+    }
+
     // 3. MENGE KORRIGIEREN (+ / - in der Kasse)
     if (action === 'updateOrderMenge') {
       const sheet = SpreadsheetApp.openById("1BN3xy3e-gUxFNtLpPDRC8r1ZvG9t1hW0S_46W_2L5pE").getSheetByName('Bestellungen');

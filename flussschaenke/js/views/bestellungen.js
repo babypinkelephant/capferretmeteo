@@ -36,21 +36,9 @@ export const renderBestellungen = async (container) => {
         listContainer.innerHTML = html;
 
         document.querySelectorAll('.confirm-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
+            btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
-                const button = e.currentTarget;
-                const originalText = button.innerHTML;
-                button.innerHTML = '<span class="loader" style="border-top-color:#000; width: 16px; height: 16px;"></span>';
-                button.disabled = true;
-
-                try {
-                    await api.updateOrderStatus(id, 'Serviert');
-                    // Der Optimistic Update triggert automatisch ein Re-Render über den Subscriber!
-                } catch (error) {
-                    alert('Fehler: ' + error.message);
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                }
+                api.updateOrderStatus(id, 'Serviert');
             });
         });
     };
