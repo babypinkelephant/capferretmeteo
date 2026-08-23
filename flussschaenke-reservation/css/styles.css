@@ -1,40 +1,40 @@
 /* ==========================================================================
    Fluss-Schänke Zürich - Herbst-Reservationen Design System
-   Aesthetic: Warm autumnal pastel tones
+   Aesthetic: Light Autumnal Pastel Palette (Moonstone, Potion, Veil, Ember, Spellfire, Solstice)
    ========================================================================== */
 
 :root {
-    --bg-page: #6E0000;
-    --bg-card: #4D0202;
-    --bg-card-subtle: #590505;
-    --bg-hero: #570000;
+    --bg-page: #FAF6F0;           /* Sehr heller Cremeton */
+    --bg-card: #FFFFFF;           /* Saubere weiße Karten */
+    --bg-card-subtle: #F6ECE2;    /* Helles warmes Creme */
+    --bg-hero: #F4EAE0;           /* Helles Pastell-Hero */
+    --bg-moonstone: #5C4B54;      /* Moonstone (dunkles gedämpftes Mauve-Grau) */
     
-    --primary: #F8E10F;
-    --primary-hover: #FFE61A;
-    --primary-dark: #F8E10F;
+    --primary: #E18262;           /* Ember (gedämpftes Terrakotta) */
+    --primary-hover: #F69E6C;     /* Spellfire (heller Coral Hover) */
+    --primary-dark: #A76E7D;      /* Potion (dunkles Mauve) */
     
-    --accent-gold: #F8E10F;
-    --accent-gold-light: #4A0000;
-    --accent-river: #F8E10F;
-    --accent-teal: #FFE23B;
+    --accent-gold: #F3BD7D;       /* Solstice (Warm Golden Amber) */
+    --accent-mauve: #A76E7D;      /* Potion */
+    --accent-river: #5C4B54;      /* Moonstone */
     
-    --text-main: #FFFFFF;
-    --text-muted: #FFE8A3;
-    --text-light: #FFFFFF;
+    --text-main: #2D2328;         /* Dunkles Charcoal-Grau (abgeleitet von Moonstone) */
+    --text-muted: #65545E;        /* Muted Mauve-Grau */
+    --text-light: #FAF6F0;        /* Creme-Weiß für dunkle Hintergründe */
     
-    --border-color: rgba(248, 225, 15, 0.28);
-    --border-accent: rgba(248, 225, 15, 0.45);
+    --border-color: #E2D2C3;
+    --border-accent: #A76E7D;     /* Potion border */
     
-    --status-success-bg: #1B4010;
-    --status-success-text: #FFFFFF;
-    --status-warning-bg: #594400;
-    --status-warning-text: #F8E10F;
-    --status-danger-bg: #570C0C;
-    --status-danger-text: #FF9999;
+    --status-success-bg: #E8F3E8;
+    --status-success-text: #2E6B34;
+    --status-warning-bg: #FDF5E6;
+    --status-warning-text: #965B00;
+    --status-danger-bg: #FBEAEA;
+    --status-danger-text: #A03333;
     
-    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.4);
-    --shadow-medium: 0 10px 40px rgba(0, 0, 0, 0.5);
-    --shadow-hover: 0 16px 40px rgba(248, 225, 15, 0.35);
+    --shadow-soft: 0 4px 20px rgba(92, 75, 84, 0.06);
+    --shadow-medium: 0 10px 30px rgba(92, 75, 84, 0.10);
+    --shadow-hover: 0 14px 35px rgba(225, 130, 98, 0.22);
     
     --radius-sm: 8px;
     --radius-md: 14px;
@@ -64,6 +64,7 @@ body {
 h1, h2, h3, .font-serif {
     font-family: 'Bryndan Write', 'Caveat', 'Playfair Display', Georgia, serif;
     font-weight: 700;
+    color: var(--bg-moonstone);
 }
 
 .container {
@@ -75,7 +76,7 @@ h1, h2, h3, .font-serif {
 
 /* ========== HEADER ========== */
 .site-header {
-    background: #4D0202;
+    background: rgba(250, 246, 240, 0.94);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
@@ -99,37 +100,19 @@ h1, h2, h3, .font-serif {
     color: var(--text-main);
 }
 
-.brand-icon {
-    width: 40px;
-    height: 40px;
-    background: #6E0000;
-    border: 1px solid var(--border-accent);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.brand-icon svg {
-    width: 20px;
-    height: 20px;
-    fill: #F8E10F;
-}
-
 .brand-text h1 {
     font-family: 'Bryndan Write', 'Caveat', serif;
     font-size: 1.35rem;
     font-weight: 700;
     margin: 0;
     line-height: 1.1;
-    color: #F8E10F;
+    color: #5C4B54; /* Moonstone */
 }
 
 .brand-text span {
     font-family: 'Outfit', sans-serif;
     font-size: 0.78rem;
-    color: #FFE8A3;
+    color: #A76E7D; /* Potion */
     font-weight: 500;
     letter-spacing: 0.5px;
 }
@@ -142,15 +125,16 @@ h1, h2, h3, .font-serif {
     position: relative;
     overflow: hidden;
     border-radius: 0 0 28px 28px;
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-soft);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .hero-bg-shapes {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background-image: 
-        radial-gradient(circle at 10% 20%, rgba(248, 225, 15, 0.12) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(248, 225, 15, 0.08) 0%, transparent 50%);
+        radial-gradient(circle at 10% 20%, rgba(225, 130, 98, 0.10) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(167, 110, 125, 0.08) 0%, transparent 50%);
     pointer-events: none;
 }
 
@@ -165,10 +149,10 @@ h1, h2, h3, .font-serif {
 .hero-badge {
     display: inline-flex;
     align-items: center;
-    background: rgba(248, 225, 15, 0.15);
-    border: 1px solid rgba(248, 225, 15, 0.35);
-    color: #F8E10F;
-    padding: 5px 16px;
+    background: rgba(167, 110, 125, 0.12);
+    border: 1px solid rgba(167, 110, 125, 0.3);
+    color: #A76E7D; /* Potion */
+    padding: 6px 18px;
     border-radius: 30px;
     font-family: 'Outfit', sans-serif;
     font-size: 0.8rem;
@@ -184,14 +168,14 @@ h1, h2, h3, .font-serif {
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 14px;
-    color: #F8E10F;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    color: #5C4B54; /* Moonstone */
+    text-shadow: none;
 }
 
 .hero-subtitle {
     font-family: 'Outfit', sans-serif;
     font-size: 1.1rem;
-    color: #FFFFFF;
+    color: #2D2328; /* Charcoal */
     margin-bottom: 36px;
     font-weight: 400;
     line-height: 1.6;
@@ -208,20 +192,19 @@ h1, h2, h3, .font-serif {
 }
 
 .hero-info-card {
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(248, 225, 15, 0.35);
+    background: #ECDAC7; /* Veil */
+    border: 1.5px solid #A76E7D; /* Potion */
     border-radius: var(--radius-md);
     padding: 18px 14px;
     text-align: center;
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 15px rgba(92, 75, 84, 0.05);
 }
 
 .hero-info-card:hover {
     transform: translateY(-2px);
-    border-color: rgba(248, 225, 15, 0.7);
-    background: rgba(0, 0, 0, 0.45);
+    border-color: #5C4B54; /* Moonstone */
+    box-shadow: 0 8px 25px rgba(92, 75, 84, 0.12);
 }
 
 .hero-info-icon {
@@ -233,13 +216,13 @@ h1, h2, h3, .font-serif {
 .hero-info-icon svg {
     width: 24px;
     height: 24px;
-    fill: #F8E10F;
+    fill: #A76E7D; /* Potion */
 }
 
 .hero-info-label {
     font-family: 'Outfit', sans-serif;
     font-size: 0.75rem;
-    color: #F8E10F;
+    color: #A76E7D; /* Potion */
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -250,7 +233,7 @@ h1, h2, h3, .font-serif {
     font-family: 'Outfit', sans-serif;
     font-size: 0.95rem;
     font-weight: 600;
-    color: #FFFFFF;
+    color: #2D2328; /* Charcoal */
 }
 
 /* ========== INFO SECTIONS ========== */
@@ -262,25 +245,26 @@ h1, h2, h3, .font-serif {
 }
 
 .info-block {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: #ECDAC7; /* Veil */
+    border: 1.5px solid #A76E7D; /* Potion */
     border-radius: var(--radius-md);
     padding: 22px 24px;
+    box-shadow: 0 4px 15px rgba(92, 75, 84, 0.05);
 }
 
 .info-block h3 {
     font-family: 'Bryndan Write', 'Caveat', serif;
     font-size: 1.3rem;
-    color: #F8E10F;
+    color: #5C4B54; /* Moonstone */
     margin-bottom: 10px;
     padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(167, 110, 125, 0.3);
 }
 
 .info-block p {
     font-family: 'Outfit', sans-serif;
     font-size: 0.95rem;
-    color: #FFFFFF;
+    color: #2D2328; /* Charcoal */
     line-height: 1.6;
 }
 
@@ -288,7 +272,7 @@ h1, h2, h3, .font-serif {
     margin-top: 8px;
     font-family: 'Outfit', sans-serif;
     font-style: italic;
-    color: #FFE8A3;
+    color: #8C5463; /* Dark Potion */
     font-size: 0.88rem;
 }
 
@@ -319,9 +303,9 @@ h1, h2, h3, .font-serif {
 .section-number {
     width: 34px;
     height: 34px;
-    background: var(--bg-hero);
-    color: var(--primary-dark);
-    border: 1px solid var(--border-accent);
+    background: #ECDAC7; /* Veil */
+    color: #5C4B54; /* Moonstone */
+    border: 1.5px solid #A76E7D; /* Potion */
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -333,7 +317,7 @@ h1, h2, h3, .font-serif {
 
 .section-title h2 {
     font-size: 1.45rem;
-    color: var(--accent-river);
+    color: #5C4B54; /* Moonstone */
     margin: 0;
 }
 
@@ -353,7 +337,7 @@ h1, h2, h3, .font-serif {
 
 .date-card {
     background: var(--bg-card-subtle);
-    border: 2px solid transparent;
+    border: 1.5px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 16px 14px;
     cursor: pointer;
@@ -368,13 +352,13 @@ h1, h2, h3, .font-serif {
 .date-card:hover:not(.disabled) {
     transform: translateY(-3px);
     box-shadow: var(--shadow-hover);
-    border-color: var(--border-accent);
-    background: #800000;
+    border-color: #A76E7D; /* Potion */
+    background: #FFFFFF;
 }
 
 .date-card.selected {
-    border-color: #F8E10F;
-    background: #8A0000;
+    border-color: #E18262; /* Ember */
+    background: #FFFFFF;
     box-shadow: var(--shadow-hover);
 }
 
@@ -394,7 +378,7 @@ h1, h2, h3, .font-serif {
 .date-number {
     font-size: 1.45rem;
     font-weight: 700;
-    color: var(--accent-river);
+    color: #5C4B54; /* Moonstone */
     margin: 4px 0 8px 0;
     font-family: 'Playfair Display', serif;
 }
@@ -435,7 +419,7 @@ h1, h2, h3, .font-serif {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    border: 1px solid var(--border-color);
+    border: 1.5px solid var(--border-color);
     background: #FFF;
     color: var(--text-main);
     font-size: 1.3rem;
@@ -448,9 +432,9 @@ h1, h2, h3, .font-serif {
 }
 
 .btn-counter:hover:not(:disabled) {
-    background: var(--primary);
+    background: #E18262; /* Ember */
     color: #FFF;
-    border-color: var(--primary);
+    border-color: #E18262;
 }
 
 .btn-counter:disabled {
@@ -463,7 +447,7 @@ h1, h2, h3, .font-serif {
     font-weight: 700;
     min-width: 36px;
     text-align: center;
-    color: var(--accent-river);
+    color: #5C4B54; /* Moonstone */
     font-family: 'Playfair Display', serif;
 }
 
@@ -490,25 +474,25 @@ select,
 textarea {
     width: 100%;
     padding: 12px 14px;
-    border: 1.5px solid var(--border-accent);
+    border: 1.5px solid var(--border-color);
     border-radius: var(--radius-sm);
     font-size: 0.93rem;
     font-family: inherit;
-    color: #F8E10F;
-    background: #500000;
+    color: #2D2328;
+    background: #FFFFFF;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
     outline: none;
 }
 
 input:focus, select:focus, textarea:focus {
-    border-color: #F8E10F;
-    box-shadow: 0 0 0 3px rgba(248, 225, 15, 0.25);
+    border-color: #E18262; /* Ember */
+    box-shadow: 0 0 0 3px rgba(225, 130, 98, 0.2);
 }
 
 /* ========== GUEST CARDS ========== */
 .guest-card {
-    background: var(--bg-card-subtle);
-    border: 1px solid var(--border-accent);
+    background: #F6ECE2;
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 20px;
     margin-bottom: 14px;
@@ -525,7 +509,7 @@ input:focus, select:focus, textarea:focus {
 
 .guest-card-title {
     font-weight: 700;
-    color: var(--primary-dark);
+    color: #5C4B54; /* Moonstone */
     font-size: 0.95rem;
     display: flex;
     align-items: center;
@@ -551,31 +535,32 @@ input:focus, select:focus, textarea:focus {
 }
 
 .btn-primary {
-    background: #F8E10F;
-    color: #930000;
-    box-shadow: 0 4px 16px rgba(248, 225, 15, 0.3);
+    background: #E18262; /* Ember */
+    color: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(225, 130, 98, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    background: #FFE61A;
-    color: #7A0000;
-    box-shadow: 0 8px 20px rgba(248, 225, 15, 0.45);
+    background: #F69E6C; /* Spellfire */
+    color: #FFFFFF;
+    box-shadow: 0 8px 20px rgba(246, 158, 108, 0.4);
 }
 
 .btn-secondary {
-    background: #F8E10F;
-    color: #4D0202;
+    background: #E18262; /* Ember */
+    color: #FFFFFF;
     font-weight: 700;
-    border: 1.5px solid #F8E10F;
-    box-shadow: 0 4px 14px rgba(248, 225, 15, 0.25);
+    border: 1.5px solid #E18262;
+    box-shadow: 0 4px 14px rgba(225, 130, 98, 0.25);
 }
 
 .btn-secondary:hover {
-    background: #FFE61A;
-    color: #3D0000;
+    background: #F69E6C; /* Spellfire */
+    color: #FFFFFF;
+    border-color: #F69E6C;
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(248, 225, 15, 0.4);
+    box-shadow: 0 6px 18px rgba(246, 158, 108, 0.35);
 }
 
 .btn-block { width: 100%; }
@@ -612,11 +597,19 @@ input:focus, select:focus, textarea:focus {
 
 /* ========== SUMMARY BOX ========== */
 .summary-box {
-    background: var(--bg-hero);
-    border: 1px solid var(--border-accent);
+    background: #ECDAC7; /* Veil */
+    border: 1.5px solid #A76E7D; /* Potion */
     border-radius: var(--radius-md);
     padding: 22px;
     margin: 24px 0;
+    color: #2D2328;
+}
+
+.summary-box h3 {
+    margin-top: 0;
+    color: #5C4B54; /* Moonstone */
+    font-size: 1.2rem;
+    margin-bottom: 16px;
 }
 
 .summary-row {
@@ -624,7 +617,7 @@ input:focus, select:focus, textarea:focus {
     justify-content: space-between;
     align-items: center;
     padding: 7px 0;
-    border-bottom: 1px dashed rgba(200, 149, 108, 0.2);
+    border-bottom: 1px dashed rgba(167, 110, 125, 0.3);
     font-size: 0.9rem;
 }
 
@@ -637,7 +630,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .success-fullpage {
-    background: var(--bg-main, #FDFBF7);
+    background: var(--bg-page);
     min-height: calc(100vh - 70px);
     text-align: center;
     padding-bottom: 60px;
@@ -662,8 +655,8 @@ input:focus, select:focus, textarea:focus {
 }
 
 .booking-id-box {
-    background: var(--bg-card-subtle);
-    border: 2px dashed var(--primary);
+    background: #F6ECE2;
+    border: 2px dashed #E18262;
     border-radius: var(--radius-md);
     padding: 18px 24px;
     margin: 24px auto;
@@ -674,7 +667,7 @@ input:focus, select:focus, textarea:focus {
     font-family: monospace;
     font-size: 1.7rem;
     font-weight: 700;
-    color: var(--primary-dark);
+    color: #5C4B54;
     letter-spacing: 2px;
 }
 
@@ -682,7 +675,7 @@ input:focus, select:focus, textarea:focus {
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(74, 56, 40, 0.55);
+    background: rgba(45, 35, 40, 0.55);
     backdrop-filter: blur(6px);
     z-index: 200;
     display: flex;
@@ -700,9 +693,9 @@ input:focus, select:focus, textarea:focus {
 }
 
 .modal-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-accent);
-    color: var(--text-main);
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    color: #2D2328;
     border-radius: var(--radius-xl);
     max-width: 620px;
     width: 100%;
@@ -728,7 +721,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .btn-close {
-    background: var(--bg-card-subtle);
+    background: #F6ECE2;
     border: none;
     width: 34px;
     height: 34px;
@@ -743,6 +736,30 @@ input:focus, select:focus, textarea:focus {
 }
 
 .btn-close:hover { background: var(--border-color); }
+
+/* ========== FOOTER ========== */
+.site-footer {
+    background: #5C4B54; /* Moonstone */
+    color: #FAF6F0;      /* Cream */
+    padding: 36px 0;
+    margin-top: 60px;
+    text-align: center;
+    font-size: 0.9rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.site-footer p {
+    margin-bottom: 8px;
+}
+
+.site-footer a {
+    color: #F3BD7D; /* Solstice */
+    text-decoration: underline;
+}
+
+.site-footer a:hover {
+    color: #FFFFFF;
+}
 
 /* ========== SPINNER ========== */
 .spinner {
