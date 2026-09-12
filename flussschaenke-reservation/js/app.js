@@ -27,41 +27,6 @@ let selectedDate = null;
 let availabilityData = {};
 let currentManageBooking = null;
 
-// [...]
-
-// app.js - In selectDate(isoDate) anpassen:
-const maxSeats = Math.min(MAX_GUESTS, avail);
-if (guestCount > maxSeats) guestCount = Math.max(MIN_GUESTS, maxSeats);
-
-// [...]
-
-// app.js - In setupEventListeners() anpassen:
-document.getElementById('btn-minus')?.addEventListener('click', () => {
-    if (guestCount > MIN_GUESTS) { // Minimalwert erzwingen
-        guestCount--;
-        document.getElementById('counter-val').textContent = guestCount;
-        updateGuestFormCards();
-        updateSummary();
-    }
-});
-
-document.getElementById('btn-plus')?.addEventListener('click', () => {
-    const maxSeats = selectedDate ? Math.min(MAX_GUESTS, availabilityData[selectedDate]?.available || 30) : MAX_GUESTS;
-    if (guestCount < maxSeats) { // Maximalwert erzwingen
-        guestCount++;
-        document.getElementById('counter-val').textContent = guestCount;
-        updateGuestFormCards();
-        updateSummary();
-    }
-});
-// [...]
-
-// app.js - In updateGuestFormCards() die Speicherschleife anpassen:
-const saved = [];
-for (let i = 0; i < MAX_GUESTS; i++) { // Von 10 auf MAX_GUESTS ändern
-    saved[i] = {
-        // [...]
-
         // ============================================================
         // DATE RENDERING
         // ============================================================
@@ -137,8 +102,8 @@ for (let i = 0; i < MAX_GUESTS; i++) { // Von 10 auf MAX_GUESTS ändern
             document.getElementById(`date-card-${d.iso}`)?.classList.toggle('selected', d.iso === isoDate);
         });
 
-        const maxSeats = Math.min(10, avail);
-        if (guestCount > maxSeats) guestCount = Math.max(1, maxSeats);
+        const maxSeats = Math.min(MAX_GUESTS, avail);
+        if (guestCount > maxSeats) guestCount = Math.max(MIN_GUESTS, maxSeats);
 
         document.getElementById('counter-val').textContent = guestCount;
 
@@ -162,7 +127,7 @@ for (let i = 0; i < MAX_GUESTS; i++) { // Von 10 auf MAX_GUESTS ändern
 
     function setupEventListeners() {
         document.getElementById('btn-minus')?.addEventListener('click', () => {
-            if (guestCount > 1) {
+            if (guestCount > MIN_GUESTS) {
                 guestCount--;
                 document.getElementById('counter-val').textContent = guestCount;
                 updateGuestFormCards();
@@ -171,7 +136,7 @@ for (let i = 0; i < MAX_GUESTS; i++) { // Von 10 auf MAX_GUESTS ändern
         });
 
         document.getElementById('btn-plus')?.addEventListener('click', () => {
-            const maxSeats = selectedDate ? Math.min(10, availabilityData[selectedDate]?.available || 30) : 10;
+            const maxSeats = selectedDate ? Math.min(MAX_GUESTS, availabilityData[selectedDate]?.available || 30) : MAX_GUESTS;
             if (guestCount < maxSeats) {
                 guestCount++;
                 document.getElementById('counter-val').textContent = guestCount;
@@ -213,7 +178,7 @@ for (let i = 0; i < MAX_GUESTS; i++) { // Von 10 auf MAX_GUESTS ändern
 
         // Vorherige Werte sichern
         const saved = [];
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < MAX_GUESTS; i++) {
             saved[i] = {
                 v: document.getElementById(`gast-vorname-${i}`)?.value || '',
                 n: document.getElementById(`gast-nachname-${i}`)?.value || '',

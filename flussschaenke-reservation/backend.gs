@@ -190,23 +190,22 @@ function updateReservation(payload) {
 
   if (existingRows.length === 0) return outputJSON({ status: 'error', message: 'Reservation nicht gefunden.' });
 
+  if (gaeste.length !== existingRows.length) {
+    return outputJSON({
+      status: 'error',
+      message: 'Die Anzahl der reservierten Plätze kann nachträglich online nicht angepasst werden. Bitte wende dich für Änderungen der Gästezahl per E-Mail an uns.'
+    });
+  }
+
   const timestamp = new Date().toISOString();
 
   for (let i = 0; i < gaeste.length; i++) {
-    if (i < existingRows.length) {
-      const r = existingRows[i].row;
-      sheet.getRange(r, 5).setValue(gaeste[i].vorname || '');
-      sheet.getRange(r, 6).setValue(gaeste[i].nachname || '');
-      sheet.getRange(r, 7).setValue(gaeste[i].email || '');
-      sheet.getRange(r, 8).setValue(gaeste[i].allergien || 'Keine Einschränkungen');
-      sheet.getRange(r, 10).setValue(timestamp);
-    } else {
-      sheet.appendRow([bookingId, targetDatum, savedNachname, hauptEmail, gaeste[i].vorname || '', gaeste[i].nachname || '', gaeste[i].email || '', gaeste[i].allergien || 'Keine Einschränkungen', 'Aktiv', timestamp, false]);
-    }
-  }
-  for (let i = gaeste.length; i < existingRows.length; i++) {
-    sheet.getRange(existingRows[i].row, 9).setValue('Storniert');
-    sheet.getRange(existingRows[i].row, 10).setValue(timestamp);
+    const r = existingRows[i].row;
+    sheet.getRange(r, 5).setValue(gaeste[i].vorname || '');
+    sheet.getRange(r, 6).setValue(gaeste[i].nachname || '');
+    sheet.getRange(r, 7).setValue(gaeste[i].email || '');
+    sheet.getRange(r, 8).setValue(gaeste[i].allergien || 'Keine Einschränkungen');
+    sheet.getRange(r, 10).setValue(timestamp);
   }
 
   refreshAvailabilityCache();
