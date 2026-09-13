@@ -40,7 +40,7 @@ function computeAvailabilityFromSheet() {
   });
 
   for (let i = 1; i < data.length; i++) {
-    const date = parseSheetDate(data[i][1]); // Sicheres Parsen des Datums
+    const date = parseSheetDate(data[i][1]);
     const status = String(data[i][8]).trim();
     if (availability[date] && status !== 'Storniert' && status !== '') {
       availability[date].booked += 1;
@@ -135,8 +135,6 @@ function createReservation(payload) {
 
   const bookingId = 'RES-' + datum.replace(/-/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
   const timestamp = new Date().toISOString();
-
-  // Datum als Text ('2026-11-04) erzwingen, um Sheet-Formatierungsfehler zu minimieren
   const safeDatumString = "'" + datum; 
 
   gaeste.forEach(gast => {
@@ -171,7 +169,7 @@ function updateReservation(payload) {
     if (String(data[i][0]).trim() === bookingId && String(data[i][3]).toLowerCase().trim() === hauptEmail && String(data[i][8]).trim() !== 'Storniert') {
       targetDatum = parseSheetDate(data[i][1]);
       savedNachname = String(data[i][2]).trim();
-      existingRows.push({ row: i + 1, payment: data[i][10] });
+      existingRows.push({ row: i + 1, payment: data[i][10], status: String(data[i][8]).trim() });
     }
   }
 
@@ -194,7 +192,9 @@ function updateReservation(payload) {
       sheet.getRange(r, 8).setValue(gAllergie);
       sheet.getRange(r, 10).setValue(timestamp);
     } else {
-      sheet.appendRow([bookingId, safeDatumString, savedNachname, hauptEmail, vName, nName, gEmail, gAllergie, 'Aktiv', timestamp, false]);
+      // Wenn der Status der Buchung bereits 'Bezahlt' war, übernehmen wir diesen für neue Zeilen
+      const inheritStatus = (existingRows[0] && existingRows[0].status === 'Bezahlt') ? 'Bezahlt' : 'Aktiv';
+      sheet.appendRow([bookingId, safeDatumString, savedNachname, hauptEmail, vName, nName, gEmail, gAllergie, inheritStatus, timestamp, false]);
     }
   }
   for (let i = gaeste.length; i < existingRows.length; i++) {
@@ -252,11 +252,6 @@ function formatDateCH(isoStr) {
   return p.length === 3 ? `${p[2]}.${p[1]}.${p[0]}` : isoStr;
 }
 
-/**
- * Holt das Datum sicher aus der Zelle. 
- * Falls Google Sheets den String in ein Date-Objekt transformiert hat,
- * wird es wieder in einen standardisierten ISO-String (YYYY-MM-DD) konvertiert.
- */
 function parseSheetDate(cellValue) {
   if (!cellValue) return '';
   if (cellValue instanceof Date) {
@@ -268,17 +263,11 @@ function parseSheetDate(cellValue) {
   return String(cellValue).trim();
 }
 
-/**
- * Verhindert Formula Injection in Google Sheets.
- */
 function sanitizeSheetInput(str) {
   if (!str) return '';
   return String(str).replace(/^[=+\-@\s]+/g, '').trim();
 }
 
-/**
- * Escaped HTML-Sonderzeichen, um XSS in E-Mails zu verhindern.
- */
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -288,6 +277,10 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+// ============================================================
+// E-MAIL VERSAND (GMAIL APP)
+// ============================================================
 
 function sendConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
   try {
@@ -305,7 +298,24 @@ function sendConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
     const bodyHtml = `
       <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
         <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Wir haben deine Plätze reserviert. Überweise deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> (${gaeste.length} &times; CHF 50) innert 48 Stunden. Sobald wir sie per Email bestätigen, bist du bei uns fix auf der Liste.</p>
+        <p>Wir haben deine Plätze reserviert. Bitte überweise deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> (${gaeste.length} &times; CHF 50) innert 48 Stunden. Sobald wir den Eingang per Email bestätigen, bist du bei uns fix auf der Liste.</p>
+        
+        <div style="background:#FFF;border:1px solid #C8956C;padding:20px;border-radius:8px;margin:24px 0;">
+          <h3 style="color:#A06840;margin-top:0;margin-bottom:12px;">Zahlungsinformationen</h3>
+          <p style="margin-top:0;font-size:0.95em;color:#4A3828;">Scanne den QR-Code mit deiner E-Banking App oder löse die Überweisung manuell aus:</p>
+          
+          <div style="background:#FDF9EE;padding:14px;border-radius:6px;font-family:monospace;font-size:0.95em;margin-bottom:20px;line-height:1.5;">
+            <strong>Konto:</strong> CH61 0070 0114 8069 5993 4<br>
+            <strong>Empfänger:</strong> Verein Flusshüsli, 8037 Zürich<br>
+            <strong>Zweck:</strong> ${escapeHtml(bookingId)}
+          </div>
+          
+          <div style="text-align:center;">
+            <!-- WICHTIG: Pfad zu deinem QR-Code auf Hostpoint prüfen -->
+            <img src="https://fluss-schaenke.ch/img/twint.png" alt="QR-Code für Zahlung" style="width:100%;max-width:240px;border-radius:8px;border:1px solid #EAE0D5;">
+          </div>
+        </div>
+
         <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
           <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
           <strong>Datum:</strong> ${formattedDate}<br>
@@ -315,11 +325,16 @@ function sendConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
         <h4 style="color:#A06840;">Gästeliste &amp; Allergien</h4>
         <ul style="padding-left:20px;line-height:1.7;">${gastListHtml}</ul>
         <div style="background:#FFF;border:1px dashed #C8956C;padding:14px;border-radius:8px;margin-top:20px;font-size:0.9em;color:#8C7060;">
-          <strong>Wichtiger Hinweis:</strong> Du kannst Gästedaten und Allergien jederzeit unter "Reservation verwalten" auf <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch/</a> anpassen. Benutze dazu deine E-Mail und Booking-ID.
+          <strong>Wichtiger Hinweis:</strong> Du kannst Gästedaten und Allergien jederzeit unter "Reservation verwalten" auf <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch</a> anpassen. Benutze dazu deine E-Mail und Booking-ID.
         </div>
         <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
       </div>`;
-    MailApp.sendEmail({ to: toEmail, subject, body: `Booking-ID: ${bookingId}`, htmlBody: bodyHtml });
+      
+    GmailApp.sendEmail(toEmail, subject, `Booking-ID: ${bookingId} - Bitte überweise CHF ${betrag}.`, {
+      htmlBody: bodyHtml,
+      from: 'booking@fluss-schaenke.ch',
+      name: 'Fluss-Schänke Zürich'
+    });
   } catch (err) { Logger.log('E-Mail Fehler: ' + err); }
 }
 
@@ -342,16 +357,23 @@ function sendUpdateConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
         <h4 style="color:#A06840;">Aktualisierte Gästeliste</h4>
         <ul style="padding-left:20px;line-height:1.7;">${gastListHtml}</ul>
       </div>`;
-    MailApp.sendEmail({ to: toEmail, subject, body: `Aktualisiert: ${bookingId}`, htmlBody: bodyHtml });
+      
+    GmailApp.sendEmail(toEmail, subject, `Aktualisiert: ${bookingId}`, {
+      htmlBody: bodyHtml,
+      from: 'booking@fluss-schaenke.ch',
+      name: 'Fluss-Schänke Zürich'
+    });
   } catch (err) { Logger.log('E-Mail Fehler: ' + err); }
 }
+
 // ============================================================
 // SHEET TRIGGERS & PAYMENT EMAIL
 // ============================================================
 
 /**
  * Trigger-Funktion: Wird aufgerufen, wenn das Sheet bearbeitet wird.
- * Evaluiert den Gesamt-Zahlungsstatus einer Buchung, um E-Mail-Spam zu verhindern.
+ * Verhindert Race Conditions durch LockService bei schnellem Klicken.
+ * Unterbindet redundante E-Mails durch Umschreiben des Status auf 'Bezahlt'.
  */
 function handleStatusChange(e) {
   if (!e || !e.range) return;
@@ -366,51 +388,68 @@ function handleStatusChange(e) {
   if (col !== 11 || row < 2) return;
   
   const isChecked = e.range.getValue() === true;
-  if (!isChecked) return; // Keine Aktion bei Entfernung des Hakens
-  
-  // Grunddaten aus der bearbeiteten Zeile extrahieren
-  const bookingId = String(sheet.getRange(row, 1).getValue()).trim();
-  const hauptEmail = String(sheet.getRange(row, 4).getValue()).trim();
-  const datum = parseSheetDate(sheet.getRange(row, 2).getValue());
-  
-  // Gesamtes Sheet auslesen, um alle zugehörigen Gäste zu evaluieren
-  const data = sheet.getDataRange().getValues();
-  let totalGuests = 0;
-  let paidGuests = 0;
-  
-  for (let i = 1; i < data.length; i++) {
-    if (String(data[i][0]).trim() === bookingId && String(data[i][8]).trim() !== 'Storniert') {
-      totalGuests++;
-      const paid = (data[i][10] === true || String(data[i][10]).toUpperCase() === 'TRUE' || String(data[i][10]).toUpperCase() === 'WAHR');
-      if (paid) {
-        paidGuests++;
+  if (!isChecked) return; 
+
+  const lock = LockService.getDocumentLock();
+  try {
+    lock.waitLock(5000);
+    
+    const bookingId = String(sheet.getRange(row, 1).getValue()).trim();
+    const hauptEmail = String(sheet.getRange(row, 4).getValue()).trim();
+    const datum = parseSheetDate(sheet.getRange(row, 2).getValue());
+    
+    const data = sheet.getDataRange().getValues();
+    let totalGuests = 0;
+    let paidGuests = 0;
+    let alreadyProcessed = false;
+    const rowsToUpdate = [];
+    
+    for (let i = 1; i < data.length; i++) {
+      const currentBookingId = String(data[i][0]).trim();
+      const status = String(data[i][8]).trim();
+      
+      if (currentBookingId === bookingId && status !== 'Storniert') {
+        totalGuests++;
+        rowsToUpdate.push(i + 1); // +1 wegen 1-basiertem Zeilenindex in Apps Script
+        
+        if (status === 'Bezahlt') {
+          alreadyProcessed = true;
+        }
+        
+        const paid = (data[i][10] === true || String(data[i][10]).toUpperCase() === 'TRUE' || String(data[i][10]).toUpperCase() === 'WAHR');
+        if (paid) {
+          paidGuests++;
+        }
       }
     }
-  }
-  
-  // E-Mail nur versenden, wenn alle aktiven Gäste dieser Buchung bezahlt sind
-  if (totalGuests > 0 && totalGuests === paidGuests) {
-    sendPaymentConfirmationEmail(hauptEmail, bookingId, datum, totalGuests);
-    Logger.log(`Vollständige Zahlung bestätigt für ${bookingId}. E-Mail versendet.`);
-  } else {
-    Logger.log(`Teilzahlung für ${bookingId}: ${paidGuests}/${totalGuests} bezahlt. Keine E-Mail versendet.`);
+    
+    // E-Mail nur versenden, wenn alle bezahlt haben UND noch keine Mail verschickt wurde
+    if (totalGuests > 0 && totalGuests === paidGuests && !alreadyProcessed) {
+      sendPaymentConfirmationEmail(hauptEmail, bookingId, datum, totalGuests);
+      Logger.log(`Zahlung bestätigt für ${bookingId}. E-Mail versendet.`);
+      
+      // Status auf 'Bezahlt' setzen
+      rowsToUpdate.forEach(r => {
+        sheet.getRange(r, 9).setValue('Bezahlt'); 
+      });
+    }
+  } catch (err) {
+    Logger.log('Fehler beim Evaluieren des Payment-Status: ' + err);
+  } finally {
+    lock.releaseLock();
   }
 }
 
-/**
- * Generiert und versendet die HTML-Zahlungsbestätigung.
- * Nutzt escapeHtml() zum Schutz vor XSS-Injection via Booking-ID.
- */
 function sendPaymentConfirmationEmail(toEmail, bookingId, datumStr, anzahlPersonen) {
   try {
     const formattedDate = formatDateCH(datumStr);
     const betrag = anzahlPersonen * 50;
     
-    const subject = `Zahlungseingang bestätigt – Fluss-Schänke Zürich (${formattedDate})`;
+    const subject = `Anzahlung bestätigt – Fluss-Schänke Zürich (${formattedDate})`;
     const bodyHtml = `
       <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
         <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Vielen Dank. Wir haben deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> für <strong>${anzahlPersonen} Personen</strong> dankend erhalten.</p>
+        <p>Vielen Dank. Wir haben deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> für <strong>${anzahlPersonen} Personen</strong> erhalten.</p>
         <p>Deine Reservation für den <strong>${formattedDate}</strong> ist nun definitiv bestätigt und du stehst fix auf unserer Gästeliste.</p>
         <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
           <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
@@ -418,16 +457,15 @@ function sendPaymentConfirmationEmail(toEmail, bookingId, datumStr, anzahlPerson
           <strong>Zeit:</strong> Eintreffen ab 18:00 Uhr | Menüstart 19:00 Uhr<br>
         </div>
         <div style="background:#FFF;border:1px dashed #C8956C;padding:14px;border-radius:8px;margin-top:20px;font-size:0.9em;color:#8C7060;">
-          <strong>Wichtiger Hinweis:</strong> Du kannst Gästedaten und Allergien jederzeit unter "Reservation verwalten" auf <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch/</a> anpassen. Benutze dazu deine E-Mail und Booking-ID.
+          <strong>Wichtiger Hinweis:</strong> Du kannst Gästedaten und Präferenzen jederzeit unter "Reservation verwalten" auf <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch</a> anpassen. Benutze dazu deine E-Mail und Booking-ID.
         </div>
-        <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch.com</a></p>
+        <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
       </div>`;
       
-    MailApp.sendEmail({ 
-      to: toEmail, 
-      subject: subject, 
-      body: `Zahlungseingang bestätigt für ${bookingId}. Betrag: CHF ${betrag}.`, 
-      htmlBody: bodyHtml 
+    GmailApp.sendEmail(toEmail, subject, `Zahlungseingang bestätigt für ${bookingId}. Betrag: CHF ${betrag}.`, {
+      htmlBody: bodyHtml,
+      from: 'booking@fluss-schaenke.ch',
+      name: 'Fluss-Schänke Zürich'
     });
   } catch (err) { 
     Logger.log('E-Mail Fehler (Payment): ' + err); 

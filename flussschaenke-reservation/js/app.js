@@ -19,10 +19,10 @@ const PREFERENCE_OPTIONS = [
     { value: 'Kein Fleisch & Fisch', label: 'Kein Fleisch & Fisch' },
 ];
 
-// app.js - App-State
+// App-State
 const MIN_GUESTS = 4;
 const MAX_GUESTS = 8;
-let guestCount = MIN_GUESTS; // Synchronisation mit HTML
+let guestCount = MIN_GUESTS;
 let selectedDate = null;
 let availabilityData = {};
 let currentManageBooking = null;
@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDateCardsAvailability();
     });
 });
+
 // ============================================================
 // DATE RENDERING
 // ============================================================
@@ -70,8 +71,6 @@ function updateDateCardsAvailability() {
         if (!card || !badge) return;
 
         const info = availabilityData[d.iso];
-        // Immer explizit aus 'booked' berechnen – nie blind dem 'available'-Feld vertrauen.
-        // Extrem ressourcenschonende Bereinigung für Polling: parseInt garantiert eine Zahl.
         const booked = parseInt(info?.booked, 10) || 0;
         const avail = Math.max(0, MAX_SEATS - booked);
 
@@ -187,15 +186,13 @@ function updateGuestFormCards() {
     const container = document.getElementById('guests-container');
     if (!container) return;
 
-    // Vorherige Werte sichern
     const saved = [];
     for (let i = 0; i < MAX_GUESTS; i++) {
         saved[i] = {
             v: document.getElementById(`gast-vorname-${i}`)?.value || '',
             n: document.getElementById(`gast-nachname-${i}`)?.value || '',
             e: document.getElementById(`gast-email-${i}`)?.value || '',
-            a: document.getElementById(`gast-allergie-${i}`)?.value || 'Keine Einschränkungen',
-            d: document.getElementById(`gast-detail-${i}`)?.value || ''
+            a: document.getElementById(`gast-allergie-${i}`)?.value || 'Keine Einschränkungen'
         };
     }
 
@@ -210,7 +207,6 @@ function updateGuestFormCards() {
         const dN = saved[i]?.n || (isHaupt ? hauptN : '');
         const dE = saved[i]?.e || (isHaupt ? hauptE : '');
         const dA = saved[i]?.a || 'Keine Einschränkungen';
-        const dD = saved[i]?.d || '';
 
         html += `
             <div class="guest-card">
@@ -236,7 +232,7 @@ function updateGuestFormCards() {
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="gast-allergie-${i}">Allergie / Ernährungsform *</label>
+                        <label for="gast-allergie-${i}">Ernährungspräferenz *</label>
                         <select id="gast-allergie-${i}" required>
                             ${PREFERENCE_OPTIONS.map(o => `<option value="${o.value}" ${dA === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
                         </select>
@@ -316,14 +312,13 @@ async function handleReservationSubmit(e) {
         const rawNachname = document.getElementById(`gast-nachname-${i}`)?.value || '';
         const rawEmail = document.getElementById(`gast-email-${i}`)?.value || '';
         const rawAllergie = document.getElementById(`gast-allergie-${i}`)?.value || '';
-        const rawDetail = document.getElementById(`gast-detail-${i}`)?.value || '';
 
         if (!rawVorname.trim() || !rawNachname.trim()) {
             alert(`Bitte gib Vor- und Nachname für Gast ${i + 1} an.`);
             return;
         }
 
-        if (hasInvalidCharacters(rawVorname) || hasInvalidCharacters(rawNachname) || hasInvalidCharacters(rawEmail, true) || hasInvalidCharacters(rawDetail)) {
+        if (hasInvalidCharacters(rawVorname) || hasInvalidCharacters(rawNachname) || hasInvalidCharacters(rawEmail, true) || hasInvalidCharacters(rawAllergie)) {
             if (errorAlert) {
                 errorAlert.textContent = `Fehler: Unzulässige Sonderzeichen bei Gast ${i + 1}. Bitte nur Standardzeichen verwenden.`;
                 errorAlert.classList.remove('hidden');
@@ -336,9 +331,8 @@ async function handleReservationSubmit(e) {
         const nachname = sanitizeForBackend(rawNachname);
         const email = sanitizeForBackend(rawEmail, true);
         const allergie = sanitizeForBackend(rawAllergie);
-        const detail = sanitizeForBackend(rawDetail);
 
-        gaeste.push({ vorname, nachname, email, allergien: detail ? `${allergie} (${detail})` : allergie });
+        gaeste.push({ vorname, nachname, email, allergien: allergie });
     }
 
     const btn = document.getElementById('btn-submit-booking');
@@ -373,7 +367,6 @@ async function handleReservationSubmit(e) {
 // SUCCESS VIEW
 // ============================================================
 
-// app.js - Refactored showSuccessView
 function showSuccessView(bookingId, isoDate, email, gaeste) {
     document.getElementById('booking-form-wrapper')?.classList.add('hidden');
     document.querySelector('.hero-section')?.classList.add('hidden');
@@ -389,7 +382,7 @@ function showSuccessView(bookingId, isoDate, email, gaeste) {
 
     const gl = document.getElementById('success-guest-list');
     if (gl) {
-        gl.replaceChildren(); // Sicherer und schneller als innerHTML = ''
+        gl.replaceChildren();
 
         gaeste.forEach((g, i) => {
             const row = document.createElement('div');
@@ -399,7 +392,6 @@ function showSuccessView(bookingId, isoDate, email, gaeste) {
             const nameStrong = document.createElement('strong');
             nameStrong.textContent = `Gast ${i + 1}: `;
             nameDiv.appendChild(nameStrong);
-            // textContent verhindert XSS nativ, zusätzliche Sanitisierung zur absoluten Sicherheit
             nameDiv.appendChild(document.createTextNode(`${sanitizeForDOM(g.vorname)} ${sanitizeForDOM(g.nachname)}`));
 
             const allergieDiv = document.createElement('div');
@@ -464,7 +456,6 @@ async function handleLookupSubmit(e) {
     }
 }
 
-// app.js - Refactored renderManageView
 function renderManageView(res) {
     document.getElementById('lookup-step')?.classList.add('hidden');
     document.getElementById('manage-edit-step')?.classList.remove('hidden');
@@ -499,36 +490,59 @@ function renderManageView(res) {
         container.replaceChildren();
 
         res.gaeste.forEach((g, i) => {
-            // Container für die Gast-Karte
             const card = document.createElement('div');
             card.className = 'guest-card mb-2';
 
-            // Titel
             const title = document.createElement('h4');
             title.style.cssText = 'color:var(--primary-dark);margin-bottom:12px;';
             title.textContent = `Gast ${i + 1}`;
             card.appendChild(title);
 
-            // Form-Row
             const row = document.createElement('div');
             row.className = 'form-row';
 
-            // Hilfsfunktion zur Erstellung von Formularfeldern
+            // Hilfsfunktion für Input-Felder
             const createField = (labelTxt, cssClass, type, value, isRequired) => {
                 const group = document.createElement('div');
                 group.className = 'form-group';
-
                 const label = document.createElement('label');
                 label.textContent = labelTxt;
-
                 const input = document.createElement('input');
                 input.type = type;
                 input.className = cssClass;
-                input.value = sanitizeForDOM(value); // Zuweisung an .value property kombiniert mit Sanitisierung
+                input.value = sanitizeForDOM(value);
                 if (isRequired) input.required = true;
-
                 group.appendChild(label);
                 group.appendChild(input);
+                return group;
+            };
+
+            // Hilfsfunktion für das neue Select-Dropdown
+            const createSelectField = (labelTxt, cssClass, options, selectedValue) => {
+                const group = document.createElement('div');
+                group.className = 'form-group';
+                const label = document.createElement('label');
+                label.textContent = labelTxt;
+
+                const select = document.createElement('select');
+                select.className = cssClass;
+                select.required = true;
+
+                const safeSelected = sanitizeForDOM(selectedValue);
+
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.label;
+                    // Fallback-Prüfung, falls Altlasten im Google Sheet abweichen
+                    if (safeSelected.startsWith(opt.value) || safeSelected === opt.value) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                group.appendChild(label);
+                group.appendChild(select);
                 return group;
             };
 
@@ -537,8 +551,8 @@ function renderManageView(res) {
             row.appendChild(createField('E-Mail', 'm-email', 'email', g.email, false));
             card.appendChild(row);
 
-            // Allergie / Präferenzen (ganze Breite)
-            card.appendChild(createField('Präferenzen', 'm-allergie', 'text', g.allergien, true));
+            // Neues Dropdown für Ernährungspräferenz
+            card.appendChild(createSelectField('Ernährungspräferenz *', 'm-allergie', PREFERENCE_OPTIONS, g.allergien));
 
             container.appendChild(card);
         });
@@ -630,17 +644,13 @@ function escHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
-// Backend-Sanitisierung: Verhindert Formula Injection und filtert Sonderzeichen
 function sanitizeForBackend(str, isEmail = false) {
     if (!str) return '';
     let val = String(str);
-    // Verhindere Google Sheets Formel-Injektion (Zellen, die mit = + - @ beginnen)
     val = val.replace(/^[=+\-@\s]+/g, '');
     if (isEmail) {
-        // Erlaubt für Emails: a-z, 0-9, @, ., -, _
         val = val.replace(/[^a-zA-Z0-9@.\-_]/g, '');
     } else {
-        // Erlaubt für Namen/Allergien: Buchstaben (inkl. Umlaute), Zahlen, Leerschlag, Bindestrich und &, (, ), ., ,
         val = val.replace(/[^a-zA-Z0-9\s\-äöüÄÖÜßéèêàâôûùç&(),.]/g, '');
     }
     return val.trim();
@@ -648,18 +658,15 @@ function sanitizeForBackend(str, isEmail = false) {
 
 function hasInvalidCharacters(str, isEmail = false) {
     if (!str) return false;
-    // Prüft auf Formula-Injection-Zeichen am Anfang
     if (/^[=+\-@\s]/.test(str)) return true;
 
     if (isEmail) {
         return /[^a-zA-Z0-9@.\-_]/.test(str);
     } else {
-        // Prüft, ob ein unerlaubtes Sonderzeichen im Text enthalten ist
         return /[^a-zA-Z0-9\s\-äöüÄÖÜßéèêàâôûùç&(),.]/.test(str);
     }
 }
 
-// DOM-Sanitisierung: Extrem schnell, verhindert rudimentäres HTML für Textknoten
 function sanitizeForDOM(str) {
     if (!str) return '';
     return String(str).replace(/[<>]/g, '');
