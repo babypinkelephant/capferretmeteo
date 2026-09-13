@@ -15,7 +15,6 @@ const OPEN_DATES = [
   '2026-11-11','2026-11-12','2026-11-13','2026-11-14'
 ];
 
-// CACHE_KEY hochgesetzt, um veraltete oder fehlerhafte Zwischenspeicher zu invalidieren
 const CACHE_KEY = 'availability_v2';
 const CACHE_TTL = 360; 
 
@@ -42,7 +41,7 @@ function computeAvailabilityFromSheet() {
   for (let i = 1; i < data.length; i++) {
     const date = parseSheetDate(data[i][1]);
     const status = String(data[i][8]).trim();
-    if (availability[date] && status !== 'Storniert' && status !== '') {
+    if (availability[date] && !status.startsWith('Storniert') && status !== '') {
       availability[date].booked += 1;
       availability[date].available = Math.max(0, MAX_SEATS - availability[date].booked);
     }
@@ -124,7 +123,7 @@ function createReservation(payload) {
   let gebucht = 0;
   for (let i = 1; i < data.length; i++) {
     const sheetDatum = parseSheetDate(data[i][1]);
-    if (sheetDatum === datum && String(data[i][8]).trim() !== 'Storniert' && String(data[i][8]).trim() !== '') {
+    if (sheetDatum === datum && !String(data[i][8]).trim().startsWith('Storniert') && String(data[i][8]).trim() !== '') {
       gebucht++;
     }
   }
@@ -166,7 +165,7 @@ function updateReservation(payload) {
   const existingRows = [];
 
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][0]).trim() === bookingId && String(data[i][3]).toLowerCase().trim() === hauptEmail && String(data[i][8]).trim() !== 'Storniert') {
+    if (String(data[i][0]).trim() === bookingId && String(data[i][3]).toLowerCase().trim() === hauptEmail && !String(data[i][8]).trim().startsWith('Storniert')) {
       targetDatum = parseSheetDate(data[i][1]);
       savedNachname = String(data[i][2]).trim();
       existingRows.push({ row: i + 1, payment: data[i][10], status: String(data[i][8]).trim() });
@@ -192,7 +191,6 @@ function updateReservation(payload) {
       sheet.getRange(r, 8).setValue(gAllergie);
       sheet.getRange(r, 10).setValue(timestamp);
     } else {
-      // Wenn der Status der Buchung bereits 'Bezahlt' war, übernehmen wir diesen für neue Zeilen
       const inheritStatus = (existingRows[0] && existingRows[0].status === 'Bezahlt') ? 'Bezahlt' : 'Aktiv';
       sheet.appendRow([bookingId, safeDatumString, savedNachname, hauptEmail, vName, nName, gEmail, gAllergie, inheritStatus, timestamp, false]);
     }
@@ -214,7 +212,7 @@ function lookupBookingData(email, bookingId) {
   let datum = '', hauptEmail = '', totalPaid = 0;
 
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][0]).trim() === bookingId && String(data[i][3]).toLowerCase().trim() === email && String(data[i][8]).trim() !== 'Storniert') {
+    if (String(data[i][0]).trim() === bookingId && String(data[i][3]).toLowerCase().trim() === email && !String(data[i][8]).trim().startsWith('Storniert')) {
       datum = parseSheetDate(data[i][1]);
       hauptEmail = String(data[i][3]).trim();
       const paid = (data[i][10] === true || String(data[i][10]).toUpperCase() === 'TRUE' || String(data[i][10]).toUpperCase() === 'WAHR');
@@ -298,7 +296,7 @@ function sendConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
     const bodyHtml = `
       <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
         <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Wir haben deine Plätze reserviert. Bitte überweise deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> (${gaeste.length} &times; CHF 50) innert 48 Stunden. Sobald wir den Eingang per Email bestätigen, bist du bei uns fix auf der Liste.</p>
+        <p>Ciao! Wir haben deine Plätze reserviert. Bitte überweise deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> (${gaeste.length} &times; CHF 50) innert 48 Stunden. Sobald wir den Eingang per Email bestätigen, bist du bei uns fix auf der Liste. A dopo!</p>
         
         <div style="background:#FFF;border:1px solid #C8956C;padding:20px;border-radius:8px;margin:24px 0;">
           <h3 style="color:#A06840;margin-top:0;margin-bottom:12px;">Zahlungsinformationen</h3>
@@ -311,7 +309,6 @@ function sendConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
           </div>
           
           <div style="text-align:center;">
-            <!-- WICHTIG: Pfad zu deinem QR-Code auf Hostpoint prüfen -->
             <img src="https://fluss-schaenke.ch/img/twint.png" alt="QR-Code für Zahlung" style="width:100%;max-width:240px;border-radius:8px;border:1px solid #EAE0D5;">
           </div>
         </div>
@@ -356,6 +353,7 @@ function sendUpdateConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
         <p>Deine Reservation <strong>${escapeHtml(bookingId)}</strong> für den <strong>${formattedDate}</strong> wurde aktualisiert.</p>
         <h4 style="color:#A06840;">Aktualisierte Gästeliste</h4>
         <ul style="padding-left:20px;line-height:1.7;">${gastListHtml}</ul>
+        <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
       </div>`;
       
     GmailApp.sendEmail(toEmail, subject, `Aktualisiert: ${bookingId}`, {
@@ -366,78 +364,30 @@ function sendUpdateConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
   } catch (err) { Logger.log('E-Mail Fehler: ' + err); }
 }
 
-// ============================================================
-// SHEET TRIGGERS & PAYMENT EMAIL
-// ============================================================
-
-/**
- * Trigger-Funktion: Wird aufgerufen, wenn das Sheet bearbeitet wird.
- * Verhindert Race Conditions durch LockService bei schnellem Klicken.
- * Unterbindet redundante E-Mails durch Umschreiben des Status auf 'Bezahlt'.
- */
-function handleStatusChange(e) {
-  if (!e || !e.range) return;
-  
-  const sheet = e.range.getSheet();
-  if (sheet.getName() !== SHEET_NAME) return;
-  
-  const row = e.range.getRow();
-  const col = e.range.getColumn();
-  
-  // Abbruch, wenn nicht Spalte K (11) oder wenn Header (Zeile 1) bearbeitet wird
-  if (col !== 11 || row < 2) return;
-  
-  const isChecked = e.range.getValue() === true;
-  if (!isChecked) return; 
-
-  const lock = LockService.getDocumentLock();
+function sendCancellationEmail(toEmail, bookingId, datumStr, nachname) {
   try {
-    lock.waitLock(5000);
+    const formattedDate = formatDateCH(datumStr);
     
-    const bookingId = String(sheet.getRange(row, 1).getValue()).trim();
-    const hauptEmail = String(sheet.getRange(row, 4).getValue()).trim();
-    const datum = parseSheetDate(sheet.getRange(row, 2).getValue());
-    
-    const data = sheet.getDataRange().getValues();
-    let totalGuests = 0;
-    let paidGuests = 0;
-    let alreadyProcessed = false;
-    const rowsToUpdate = [];
-    
-    for (let i = 1; i < data.length; i++) {
-      const currentBookingId = String(data[i][0]).trim();
-      const status = String(data[i][8]).trim();
+    const subject = `Reservation storniert – Fluss-Schänke Zürich (${formattedDate})`;
+    const bodyHtml = `
+      <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
+        <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
+        <p>Ciao ${escapeHtml(nachname)}!</p>
+        <p>Wir bestätigen hiermit die vollständige Stornierung deiner Reservation für den <strong>${formattedDate}</strong>.</p>
+        <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
+          <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
+          <strong>Status:</strong> Storniert
+        </div>
+        <p>Falls du die Anzahlung bereits geleistet hast und die Stornierung fristgerecht erfolgte, melde dich bitte kurz bei uns bezüglich der Rückerstattung.</p>
+        <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
+      </div>`;
       
-      if (currentBookingId === bookingId && status !== 'Storniert') {
-        totalGuests++;
-        rowsToUpdate.push(i + 1); // +1 wegen 1-basiertem Zeilenindex in Apps Script
-        
-        if (status === 'Bezahlt') {
-          alreadyProcessed = true;
-        }
-        
-        const paid = (data[i][10] === true || String(data[i][10]).toUpperCase() === 'TRUE' || String(data[i][10]).toUpperCase() === 'WAHR');
-        if (paid) {
-          paidGuests++;
-        }
-      }
-    }
-    
-    // E-Mail nur versenden, wenn alle bezahlt haben UND noch keine Mail verschickt wurde
-    if (totalGuests > 0 && totalGuests === paidGuests && !alreadyProcessed) {
-      sendPaymentConfirmationEmail(hauptEmail, bookingId, datum, totalGuests);
-      Logger.log(`Zahlung bestätigt für ${bookingId}. E-Mail versendet.`);
-      
-      // Status auf 'Bezahlt' setzen
-      rowsToUpdate.forEach(r => {
-        sheet.getRange(r, 9).setValue('Bezahlt'); 
-      });
-    }
-  } catch (err) {
-    Logger.log('Fehler beim Evaluieren des Payment-Status: ' + err);
-  } finally {
-    lock.releaseLock();
-  }
+    GmailApp.sendEmail(toEmail, subject, `Reservation ${bookingId} storniert.`, {
+      htmlBody: bodyHtml,
+      from: 'booking@fluss-schaenke.ch',
+      name: 'Fluss-Schänke Zürich'
+    });
+  } catch (err) { Logger.log('E-Mail Fehler (Storno): ' + err); }
 }
 
 function sendPaymentConfirmationEmail(toEmail, bookingId, datumStr, anzahlPersonen) {
@@ -469,5 +419,126 @@ function sendPaymentConfirmationEmail(toEmail, bookingId, datumStr, anzahlPerson
     });
   } catch (err) { 
     Logger.log('E-Mail Fehler (Payment): ' + err); 
+  }
+}
+
+// ============================================================
+// SHEET TRIGGERS
+// ============================================================
+
+/**
+ * Trigger-Funktion: Reagiert auf manuelle Änderungen im Sheet.
+ * Behandelt Status-Änderungen (Stornierung) und Payment-Änderungen.
+ */
+function handleStatusChange(e) {
+  if (!e || !e.range) return;
+  
+  const sheet = e.range.getSheet();
+  if (sheet.getName() !== SHEET_NAME) return;
+  
+  const row = e.range.getRow();
+  const col = e.range.getColumn();
+  
+  // Hört ausschliesslich auf Spalte I (9 - Status) und K (11 - Payment)
+  if ((col !== 9 && col !== 11) || row < 2) return;
+  
+  const lock = LockService.getDocumentLock();
+  try {
+    lock.waitLock(5000);
+    
+    const bookingId = String(sheet.getRange(row, 1).getValue()).trim();
+    const hauptEmail = String(sheet.getRange(row, 4).getValue()).trim();
+    const datum = parseSheetDate(sheet.getRange(row, 2).getValue());
+    
+    const data = sheet.getDataRange().getValues();
+
+    if (col === 11) {
+      // --------------------------------------------------------
+      // PAYMENT LOGIC
+      // --------------------------------------------------------
+      const isChecked = e.range.getValue() === true;
+      if (!isChecked) return; 
+
+      let totalGuests = 0;
+      let paidGuests = 0;
+      let alreadyProcessed = false;
+      const rowsToUpdate = [];
+      
+      for (let i = 1; i < data.length; i++) {
+        const currentBookingId = String(data[i][0]).trim();
+        const status = String(data[i][8]).trim();
+        
+        if (currentBookingId === bookingId && !status.startsWith('Storniert')) {
+          totalGuests++;
+          rowsToUpdate.push(i + 1);
+          
+          if (status === 'Bezahlt') {
+            alreadyProcessed = true;
+          }
+          
+          const paid = (data[i][10] === true || String(data[i][10]).toUpperCase() === 'TRUE' || String(data[i][10]).toUpperCase() === 'WAHR');
+          if (paid) {
+            paidGuests++;
+          }
+        }
+      }
+      
+      if (totalGuests > 0 && totalGuests === paidGuests && !alreadyProcessed) {
+        sendPaymentConfirmationEmail(hauptEmail, bookingId, datum, totalGuests);
+        Logger.log(`Zahlung bestätigt für ${bookingId}. E-Mail versendet.`);
+        
+        rowsToUpdate.forEach(r => {
+          sheet.getRange(r, 9).setValue('Bezahlt'); 
+        });
+      }
+    } else if (col === 9) {
+      // --------------------------------------------------------
+      // CANCELLATION LOGIC
+      // --------------------------------------------------------
+      const newStatus = String(e.range.getValue()).trim();
+      
+      if (newStatus === 'Storniert') {
+        let totalRows = 0;
+        let cancelledRows = 0;
+        let mailAlreadySent = false;
+        const rowsToUpdate = [];
+        let hauptNachname = '';
+
+        for (let i = 1; i < data.length; i++) {
+          const currentBookingId = String(data[i][0]).trim();
+          if (currentBookingId === bookingId) {
+            totalRows++;
+            rowsToUpdate.push(i + 1);
+            if (hauptNachname === '') hauptNachname = String(data[i][2]).trim();
+
+            const status = String(data[i][8]).trim();
+            if (status.startsWith('Storniert')) {
+              cancelledRows++;
+            }
+            if (status === 'Storniert (Mail)') {
+              mailAlreadySent = true;
+            }
+          }
+        }
+
+        // E-Mail versenden, wenn alle Zeilen dieser Buchung storniert wurden und noch keine Mail rausging
+        if (totalRows > 0 && totalRows === cancelledRows && !mailAlreadySent) {
+          sendCancellationEmail(hauptEmail, bookingId, datum, hauptNachname);
+          Logger.log(`Stornierung für ${bookingId} verarbeitet. E-Mail versendet.`);
+
+          // Markieren, um Spam zu verhindern
+          rowsToUpdate.forEach(r => {
+            sheet.getRange(r, 9).setValue('Storniert (Mail)');
+          });
+        }
+      }
+      
+      // Zwingend ausführen bei Statusänderungen: Cache invalidieren, um freie Plätze dem Frontend sofort mitzuteilen
+      refreshAvailabilityCache();
+    }
+  } catch (err) {
+    Logger.log('Fehler im handleStatusChange Trigger: ' + err);
+  } finally {
+    lock.releaseLock();
   }
 }
