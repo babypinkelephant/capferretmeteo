@@ -129,7 +129,7 @@ function createReservation(payload) {
   }
 
   if (gaeste.length > (MAX_SEATS - gebucht)) {
-    return outputJSON({ status: 'error', code: 'FULL', message: 'Leider haben wir nicht genug Platz an deinem gewünschten Abend.' });
+    return outputJSON({ status: 'error', code: 'FULL', message: 'Diese Plätze sind beliebt. Wir sind fast ausgebucht. Melde dich per Email bei uns. Wir finden bestimmt eine Lösung.' });
   }
 
   const bookingId = 'RES-' + datum.replace(/-/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
@@ -296,7 +296,7 @@ function sendConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
     const bodyHtml = `
       <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
         <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Ciao! Wir haben deine Plätze reserviert. Bitte überweise deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> (${gaeste.length} &times; CHF 50) innert 48 Stunden. Sobald wir den Eingang per Email bestätigen, bist du bei uns fix auf der Liste. A dopo!</p>
+        <p>Ciao! Wir haben deine Plätze reserviert. Bitte überweise deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> (${gaeste.length} &times; CHF 50) innert 48 Stunden. Sobald wir die Anzahlung per Email bestätigen, bist du bei uns fix auf der Liste. A dopo!</p>
         
         <div style="background:#FFF;border:1px solid #C8956C;padding:20px;border-radius:8px;margin:24px 0;">
           <h3 style="color:#A06840;margin-top:0;margin-bottom:12px;">Zahlungsinformationen</h3>
@@ -350,7 +350,7 @@ function sendUpdateConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
     const bodyHtml = `
       <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
         <h2 style="color:#A06840;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Deine Reservation <strong>${escapeHtml(bookingId)}</strong> für den <strong>${formattedDate}</strong> wurde aktualisiert.</p>
+        <p>Ciao! Deine Reservation <strong>${escapeHtml(bookingId)}</strong> für den <strong>${formattedDate}</strong> wurde aktualisiert.</p>
         <h4 style="color:#A06840;">Aktualisierte Gästeliste</h4>
         <ul style="padding-left:20px;line-height:1.7;">${gastListHtml}</ul>
         <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
@@ -372,13 +372,13 @@ function sendCancellationEmail(toEmail, bookingId, datumStr, nachname) {
     const bodyHtml = `
       <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
         <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Ciao ${escapeHtml(nachname)}!</p>
-        <p>Wir bestätigen hiermit die vollständige Stornierung deiner Reservation für den <strong>${formattedDate}</strong>.</p>
+        <p>Ciao!</p>
+        <p>Wir haben deine Reservation für den <strong>${formattedDate}</strong> storniert.</p>
         <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
           <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
           <strong>Status:</strong> Storniert
         </div>
-        <p>Falls du die Anzahlung bereits geleistet hast und die Stornierung fristgerecht erfolgte, melde dich bitte kurz bei uns bezüglich der Rückerstattung.</p>
+        <p>Fragen oder Unklarheiten? Melde dich bei uns per Email auf <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a>.</p>
         <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
       </div>`;
       
@@ -399,7 +399,7 @@ function sendPaymentConfirmationEmail(toEmail, bookingId, datumStr, anzahlPerson
     const bodyHtml = `
       <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
         <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Vielen Dank. Wir haben deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> für <strong>${anzahlPersonen} Personen</strong> erhalten.</p>
+        <p>Grazie! Wir haben deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> für <strong>${anzahlPersonen} Personen</strong> erhalten.</p>
         <p>Deine Reservation für den <strong>${formattedDate}</strong> ist nun definitiv bestätigt und du stehst fix auf unserer Gästeliste.</p>
         <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
           <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
