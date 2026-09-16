@@ -137,5 +137,18 @@ export const api = {
             hauptEmail,
             gaeste
         });
+    },
+
+    /**
+     * Auf die Warteliste setzen
+     */
+    async joinWaitlist(datum, hauptVorname, hauptNachname, hauptEmail, anzahlPlaetze) {
+        return await this.post('joinWaitlist', {
+            datum,
+            hauptVorname,
+            hauptNachname,
+            hauptEmail,
+            anzahlPlaetze
+        });
     }
 };

@@ -9,6 +9,7 @@
  */
 
 const SHEET_NAME = 'Reservationen';
+const SHEET_WAITLIST = 'Warteliste';
 const MAX_SEATS = 30;
 const OPEN_DATES = [
   '2026-11-04','2026-11-05','2026-11-06','2026-11-07',
@@ -95,6 +96,7 @@ function doPost(e) {
 
     if (action === 'createReservation') return createReservation(payload);
     if (action === 'updateReservation') return updateReservation(payload);
+    if (action === 'joinWaitlist') return joinWaitlist(payload);
 
     return outputJSON({ status: 'error', message: 'Ungültige POST Action.' });
   } catch (err) {
@@ -150,6 +152,38 @@ function createReservation(payload) {
 
   sendConfirmationEmail(hauptEmail, bookingId, datum, gaeste);
   return outputJSON({ status: 'success', bookingId, datum, anzahlPlaetze: gaeste.length });
+}
+
+function joinWaitlist(payload) {
+  const datum          = sanitizeSheetInput(payload.datum);
+  const hauptVorname   = sanitizeSheetInput(payload.hauptVorname);
+  const hauptNachname  = sanitizeSheetInput(payload.hauptNachname);
+  const hauptEmail     = sanitizeSheetInput(payload.hauptEmail).toLowerCase();
+  const anzahlPlaetze  = parseInt(payload.anzahlPlaetze, 10);
+
+  if (!datum || !hauptVorname || !hauptNachname || !hauptEmail) {
+    return outputJSON({ status: 'error', message: 'Unvollständige Angaben für die Warteliste.' });
+  }
+  if (!OPEN_DATES.includes(datum)) {
+    return outputJSON({ status: 'error', message: 'Ungültiges Veranstaltungsdatum.' });
+  }
+  if (isNaN(anzahlPlaetze) || anzahlPlaetze < 1) {
+    return outputJSON({ status: 'error', message: 'Ungültige Anzahl Plätze.' });
+  }
+
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let wlSheet = ss.getSheetByName(SHEET_WAITLIST);
+  if (!wlSheet) {
+    wlSheet = ss.insertSheet(SHEET_WAITLIST);
+    wlSheet.appendRow(['Haupt_Vorname','Haupt_Nachname','Haupt_Email','Datum','Anzahl_Plaetze','Status','Timestamp']);
+    wlSheet.getRange(1,1,1,7).setFontWeight('bold').setBackground('#EFEFEF');
+  }
+
+  const timestamp = new Date().toISOString();
+  wlSheet.appendRow([hauptVorname, hauptNachname, hauptEmail, "'" + datum, anzahlPlaetze, 'Ausstehend', timestamp]);
+
+  sendWaitlistConfirmationEmail(hauptEmail, hauptVorname, datum, anzahlPlaetze);
+  return outputJSON({ status: 'success', message: 'Du wurdest erfolgreich auf die Warteliste gesetzt.' });
 }
 
 function updateReservation(payload) {
@@ -277,149 +311,277 @@ function escapeHtml(str) {
 }
 
 // ============================================================
-// E-MAIL VERSAND (GMAIL APP)
+// E-MAIL VERSAND & TEMPLATES
 // ============================================================
 
-function sendConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
-  try {
-    const formattedDate = formatDateCH(datumStr);
-    const betrag = gaeste.length * 50;
-    
-    const gastListHtml = gaeste.map(g => {
-      const v = escapeHtml(g.vorname);
-      const n = escapeHtml(g.nachname);
-      const a = escapeHtml(g.allergien || 'Keine Einschränkungen');
-      return `<li><strong>${v} ${n}</strong> &ndash; ${a}</li>`;
-    }).join('');
-    
-    const subject = `Reservation erhalten – Fluss-Schänke Zürich (${formattedDate})`;
-    const bodyHtml = `
-      <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
-        <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Ciao! Wir haben deine Plätze reserviert. Bitte überweise deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> (${gaeste.length} &times; CHF 50) innert 48 Stunden. Sobald wir die Anzahlung per Email bestätigen, bist du bei uns fix auf der Liste. A dopo!</p>
-        
-        <div style="background:#FFF;border:1px solid #C8956C;padding:20px;border-radius:8px;margin:24px 0;">
-          <h3 style="color:#A06840;margin-top:0;margin-bottom:12px;">Zahlungsinformationen</h3>
-          <p style="margin-top:0;font-size:0.95em;color:#4A3828;">Scanne den QR-Code mit deiner E-Banking App oder löse die Überweisung manuell aus:</p>
-          
-          <div style="background:#FDF9EE;padding:14px;border-radius:6px;font-family:monospace;font-size:0.95em;margin-bottom:20px;line-height:1.5;">
-            <strong>Konto:</strong> CH61 0070 0114 8069 5993 4<br>
-            <strong>Empfänger:</strong> Verein Flusshüsli, 8037 Zürich<br>
-            <strong>Zweck:</strong> ${escapeHtml(bookingId)}
-          </div>
-          
-          <div style="text-align:center;">
-            <img src="https://fluss-schaenke.ch/img/twint.png" alt="QR-Code für Zahlung" style="width:100%;max-width:240px;border-radius:8px;border:1px solid #EAE0D5;">
-          </div>
-        </div>
+/**
+ * Zentrale, fehlertolerante Versand-Logik.
+ * Fügt zwingend BCC-Empfänger hinzu, prüft dynamisch auf Aliase und besitzt einen Fallback auf MailApp.
+ */
+function dispatchEmail(toEmail, subject, bodyPlain, bodyHtml) {
+  const targetAlias = 'booking@fluss-schaenke.ch';
+  const senderName = 'Fluss-Schänke Zürich';
+  const bccRecipients = 'alina.kilongan@hotmail.com, hello@pascalscheiber.com';
+  
+  const options = {
+    htmlBody: bodyHtml,
+    name: senderName,
+    bcc: bccRecipients
+  };
 
-        <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
-          <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
-          <strong>Datum:</strong> ${formattedDate}<br>
-          <strong>Zeit:</strong> Eintreffen 18h | Menüstart 19h<br>
-          <strong>Plätze:</strong> ${gaeste.length}
-        </div>
-        <h4 style="color:#A06840;">Gästeliste &amp; Allergien</h4>
-        <ul style="padding-left:20px;line-height:1.7;">${gastListHtml}</ul>
-        <div style="background:#FFF;border:1px dashed #C8956C;padding:14px;border-radius:8px;margin-top:20px;font-size:0.9em;color:#8C7060;">
-          <strong>Wichtiger Hinweis:</strong> Du kannst Gästedaten und Allergien jederzeit unter "Reservation verwalten" auf <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch</a> anpassen. Benutze dazu deine E-Mail und Booking-ID.
-        </div>
-        <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
-      </div>`;
+  try {
+    // 1. Versuch: Über GmailApp mit dynamischer Alias-Prüfung
+    const aliases = GmailApp.getAliases();
+    if (aliases.includes(targetAlias)) {
+      options.from = targetAlias;
+    } else {
+      Logger.log(`Warnung: Alias ${targetAlias} nicht autorisiert. Sende über Hauptadresse.`);
+    }
+    GmailApp.sendEmail(toEmail, subject, bodyPlain, options);
+  } catch (err) {
+    Logger.log(`GmailApp Fehler an ${toEmail}: ${err}. Versuche MailApp-Fallback.`);
+    // 2. Notfall-Fallback: MailApp (unterstützt keinen Alias, aber stellt Zustellung sicher)
+    try {
+      MailApp.sendEmail(toEmail, subject, bodyPlain, options);
+    } catch (fallbackErr) {
+      Logger.log(`Kritischer Fehler: Auch MailApp fehlgeschlagen: ${fallbackErr}`);
+    }
+  }
+}
+
+function sendConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
+  const formattedDate = formatDateCH(datumStr);
+  const betrag = gaeste.length * 50;
+  
+  const gastListHtml = gaeste.map(g => {
+    const v = escapeHtml(g.vorname);
+    const n = escapeHtml(g.nachname);
+    const a = escapeHtml(g.allergien || 'Keine Einschränkungen');
+    return `<li><strong>${v} ${n}</strong> &ndash; ${a}</li>`;
+  }).join('');
+  
+  const subject = `Reservation erhalten – Fluss-Schänke Zürich (${formattedDate})`;
+  const bodyHtml = `
+    <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
+      <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
+      <p>Ciao! Wir haben deine Plätze reserviert. Bitte überweise deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> (${gaeste.length} &times; CHF 50) innert 48 Stunden. Sobald wir die Anzahlung per Email bestätigen, bist du bei uns fix auf der Liste. A dopo!</p>
       
-    GmailApp.sendEmail(toEmail, subject, `Booking-ID: ${bookingId} - Bitte überweise CHF ${betrag}.`, {
-      htmlBody: bodyHtml,
-      from: 'booking@fluss-schaenke.ch',
-      name: 'Fluss-Schänke Zürich'
-    });
-  } catch (err) { Logger.log('E-Mail Fehler: ' + err); }
+      <div style="background:#FFF;border:1px solid #C8956C;padding:20px;border-radius:8px;margin:24px 0;">
+        <h3 style="color:#A06840;margin-top:0;margin-bottom:12px;">Zahlungsinformationen</h3>
+        <p style="margin-top:0;font-size:0.95em;color:#4A3828;">Scanne den QR-Code mit deiner E-Banking App oder löse die Überweisung manuell aus:</p>
+        
+        <div style="background:#FDF9EE;padding:14px;border-radius:6px;font-family:monospace;font-size:0.95em;margin-bottom:20px;line-height:1.5;">
+          <strong>Konto:</strong> CH61 0070 0114 8069 5993 4<br>
+          <strong>Empfänger:</strong> Verein Flusshüsli, 8037 Zürich<br>
+          <strong>Zweck:</strong> ${escapeHtml(bookingId)}
+        </div>
+        
+        <div style="text-align:center;">
+          <img src="https://fluss-schaenke.ch/img/twint.png" alt="QR-Code für Zahlung" style="width:100%;max-width:240px;border-radius:8px;border:1px solid #EAE0D5;">
+        </div>
+      </div>
+
+      <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
+        <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
+        <strong>Datum:</strong> ${formattedDate}<br>
+        <strong>Zeit:</strong> Eintreffen 18h | Menüstart 19h<br>
+        <strong>Plätze:</strong> ${gaeste.length}
+      </div>
+      <h4 style="color:#A06840;">Gästeliste &amp; Allergien</h4>
+      <ul style="padding-left:20px;line-height:1.7;">${gastListHtml}</ul>
+      <div style="background:#FFF;border:1px dashed #C8956C;padding:14px;border-radius:8px;margin-top:20px;font-size:0.9em;color:#8C7060;">
+        <strong>Wichtiger Hinweis:</strong> Du kannst Gästedaten und Allergien jederzeit unter "Reservation verwalten" auf <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch</a> anpassen. Benutze dazu deine E-Mail und Booking-ID.
+      </div>
+      <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
+    </div>`;
+    
+  dispatchEmail(toEmail, subject, `Booking-ID: ${bookingId} - Bitte überweise CHF ${betrag}.`, bodyHtml);
 }
 
 function sendUpdateConfirmationEmail(toEmail, bookingId, datumStr, gaeste) {
-  try {
-    const formattedDate = formatDateCH(datumStr);
+  const formattedDate = formatDateCH(datumStr);
+  const gastListHtml = gaeste.map(g => {
+    const v = escapeHtml(g.vorname);
+    const n = escapeHtml(g.nachname);
+    const a = escapeHtml(g.allergien || 'Keine Einschränkungen');
+    return `<li><strong>${v} ${n}</strong> &ndash; ${a}</li>`;
+  }).join('');
+  
+  const subject = `Reservation aktualisiert – Fluss-Schänke Zürich (${formattedDate})`;
+  const bodyHtml = `
+    <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
+      <h2 style="color:#A06840;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
+      <p>Ciao! Deine Reservation <strong>${escapeHtml(bookingId)}</strong> für den <strong>${formattedDate}</strong> wurde aktualisiert.</p>
+      <h4 style="color:#A06840;">Aktualisierte Gästeliste</h4>
+      <ul style="padding-left:20px;line-height:1.7;">${gastListHtml}</ul>
+      <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
+    </div>`;
     
-    const gastListHtml = gaeste.map(g => {
-      const v = escapeHtml(g.vorname);
-      const n = escapeHtml(g.nachname);
-      const a = escapeHtml(g.allergien || 'Keine Einschränkungen');
-      return `<li><strong>${v} ${n}</strong> &ndash; ${a}</li>`;
-    }).join('');
-    
-    const subject = `Reservation aktualisiert – Fluss-Schänke Zürich (${formattedDate})`;
-    const bodyHtml = `
-      <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
-        <h2 style="color:#A06840;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Ciao! Deine Reservation <strong>${escapeHtml(bookingId)}</strong> für den <strong>${formattedDate}</strong> wurde aktualisiert.</p>
-        <h4 style="color:#A06840;">Aktualisierte Gästeliste</h4>
-        <ul style="padding-left:20px;line-height:1.7;">${gastListHtml}</ul>
-        <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
-      </div>`;
-      
-    GmailApp.sendEmail(toEmail, subject, `Aktualisiert: ${bookingId}`, {
-      htmlBody: bodyHtml,
-      from: 'booking@fluss-schaenke.ch',
-      name: 'Fluss-Schänke Zürich'
-    });
-  } catch (err) { Logger.log('E-Mail Fehler: ' + err); }
+  dispatchEmail(toEmail, subject, `Aktualisiert: ${bookingId}`, bodyHtml);
 }
 
 function sendCancellationEmail(toEmail, bookingId, datumStr, nachname) {
-  try {
-    const formattedDate = formatDateCH(datumStr);
+  const formattedDate = formatDateCH(datumStr);
+  const subject = `Reservation storniert – Fluss-Schänke Zürich (${formattedDate})`;
+  const bodyHtml = `
+    <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
+      <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
+      <p>Ciao! Wir haben deine Reservation für den <strong>${formattedDate}</strong> storniert.</p>
+      <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
+        <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
+        <strong>Status:</strong> Storniert
+      </div>
+      <p>Fragen oder Unklarheiten? Melde dich bei uns per Email auf <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a>.</p>
+      <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
+    </div>`;
     
-    const subject = `Reservation storniert – Fluss-Schänke Zürich (${formattedDate})`;
-    const bodyHtml = `
-      <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
-        <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Ciao!</p>
-        <p>Wir haben deine Reservation für den <strong>${formattedDate}</strong> storniert.</p>
-        <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
-          <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
-          <strong>Status:</strong> Storniert
-        </div>
-        <p>Fragen oder Unklarheiten? Melde dich bei uns per Email auf <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a>.</p>
-        <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
-      </div>`;
-      
-    GmailApp.sendEmail(toEmail, subject, `Reservation ${bookingId} storniert.`, {
-      htmlBody: bodyHtml,
-      from: 'booking@fluss-schaenke.ch',
-      name: 'Fluss-Schänke Zürich'
-    });
-  } catch (err) { Logger.log('E-Mail Fehler (Storno): ' + err); }
+  dispatchEmail(toEmail, subject, `Reservation ${bookingId} storniert.`, bodyHtml);
 }
 
 function sendPaymentConfirmationEmail(toEmail, bookingId, datumStr, anzahlPersonen) {
-  try {
-    const formattedDate = formatDateCH(datumStr);
-    const betrag = anzahlPersonen * 50;
+  const formattedDate = formatDateCH(datumStr);
+  const betrag = anzahlPersonen * 50;
+  
+  const subject = `Anzahlung bestätigt – Fluss-Schänke Zürich (${formattedDate})`;
+  const bodyHtml = `
+    <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
+      <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
+      <p>Grazie! Wir haben deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> für <strong>${anzahlPersonen} Personen</strong> erhalten.</p>
+      <p>Deine Reservation für den <strong>${formattedDate}</strong> ist nun definitiv bestätigt und du stehst fix auf unserer Gästeliste.</p>
+      <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
+        <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
+        <strong>Datum:</strong> ${formattedDate}<br>
+        <strong>Zeit:</strong> Eintreffen ab 18:00 Uhr | Menüstart 19:00 Uhr<br>
+      </div>
+      <div style="background:#FFF;border:1px dashed #C8956C;padding:14px;border-radius:8px;margin-top:20px;font-size:0.9em;color:#8C7060;">
+        <strong>Wichtiger Hinweis:</strong> Du kannst Gästedaten und Präferenzen jederzeit unter "Reservation verwalten" auf <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch</a> anpassen. Benutze dazu deine E-Mail und Booking-ID.
+      </div>
+      <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
+    </div>`;
     
-    const subject = `Anzahlung bestätigt – Fluss-Schänke Zürich (${formattedDate})`;
-    const bodyHtml = `
-      <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
-        <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
-        <p>Grazie! Wir haben deine Anzahlung von <strong>CHF ${betrag}.&ndash;</strong> für <strong>${anzahlPersonen} Personen</strong> erhalten.</p>
-        <p>Deine Reservation für den <strong>${formattedDate}</strong> ist nun definitiv bestätigt und du stehst fix auf unserer Gästeliste.</p>
-        <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
-          <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
-          <strong>Datum:</strong> ${formattedDate}<br>
-          <strong>Zeit:</strong> Eintreffen ab 18:00 Uhr | Menüstart 19:00 Uhr<br>
-        </div>
-        <div style="background:#FFF;border:1px dashed #C8956C;padding:14px;border-radius:8px;margin-top:20px;font-size:0.9em;color:#8C7060;">
-          <strong>Wichtiger Hinweis:</strong> Du kannst Gästedaten und Präferenzen jederzeit unter "Reservation verwalten" auf <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch</a> anpassen. Benutze dazu deine E-Mail und Booking-ID.
-        </div>
-        <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
-      </div>`;
-      
-    GmailApp.sendEmail(toEmail, subject, `Zahlungseingang bestätigt für ${bookingId}. Betrag: CHF ${betrag}.`, {
-      htmlBody: bodyHtml,
-      from: 'booking@fluss-schaenke.ch',
-      name: 'Fluss-Schänke Zürich'
-    });
-  } catch (err) { 
-    Logger.log('E-Mail Fehler (Payment): ' + err); 
+  dispatchEmail(toEmail, subject, `Zahlungseingang bestätigt für ${bookingId}. Betrag: CHF ${betrag}.`, bodyHtml);
+}
+
+function sendWaitlistConfirmationEmail(toEmail, vorname, datumStr, anzahlPlaetze) {
+  const formattedDate = formatDateCH(datumStr);
+  const subject = `Warteliste bestätigt – Fluss-Schänke Zürich (${formattedDate})`;
+  const bodyHtml = `
+    <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
+      <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
+      <p>Ciao ${escapeHtml(vorname)}! Wir haben dich auf die Warteliste für den <strong>${formattedDate}</strong> gesetzt – mit <strong>${anzahlPlaetze} ${anzahlPlaetze === 1 ? 'Platz' : 'Plätzen'}</strong>.</p>
+      <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
+        <strong>Datum:</strong> ${formattedDate}<br>
+        <strong>Anzahl Plätze:</strong> ${anzahlPlaetze}<br>
+        <strong>Status:</strong> Auf der Warteliste
+      </div>
+      <p>Sollten Plätze frei werden, melden wir uns sofort per E-Mail. Es ist <strong>keine Zahlung</strong> erforderlich, bis wir dich kontaktieren. A dopo!</p>
+      <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
+    </div>`;
+
+  dispatchEmail(toEmail, subject, `Warteliste für ${formattedDate} mit ${anzahlPlaetze} Platz/Plätzen bestätigt. Keine Zahlung erforderlich.`, bodyHtml);
+}
+
+function sendWaitlistPromotionEmail(toEmail, vorname, bookingId, datumStr, anzahlPlaetze) {
+  const formattedDate = formatDateCH(datumStr);
+  const subject = `Plätze frei – wir haben dich eingebucht! – Fluss-Schänke Zürich (${formattedDate})`;
+  const bodyHtml = `
+    <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
+      <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
+      <p>Ciao ${escapeHtml(vorname)}! Gute Neuigkeiten: Es sind Plätze frei geworden und wir haben dich mit <strong>${anzahlPlaetze} ${anzahlPlaetze === 1 ? 'Platz' : 'Plätzen'}</strong> für den <strong>${formattedDate}</strong> eingebucht.</p>
+      <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
+        <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
+        <strong>Datum:</strong> ${formattedDate}<br>
+        <strong>Zeit:</strong> Eintreffen 18h | Menüstart 19h<br>
+        <strong>Plätze:</strong> ${anzahlPlaetze}
+      </div>
+      <div style="background:#FFF;border:1px solid #C8956C;padding:20px;border-radius:8px;margin:24px 0;">
+        <h3 style="color:#A06840;margin-top:0;">Zwei Schritte notwendig:</h3>
+        <ol style="padding-left:20px;line-height:1.8;">
+          <li><strong>Logge dich zwingend</strong> unter <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch</a> → «Reservation verwalten» ein und überschreibe die Platzhalter-Gästedaten mit deinen Angaben.</li>
+          <li><strong>Bezahle die Anzahlung</strong> von <strong>CHF ${anzahlPlaetze * 50}.–</strong> (${anzahlPlaetze} &times; CHF 50) innert 48 Stunden auf folgendes Konto: CH61 0070 0114 8069 5993 4 | Verein Flusshüsli, 8037 Zürich | Zweck: ${escapeHtml(bookingId)}</li>
+        </ol>
+      </div>
+      <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
+    </div>`;
+
+  dispatchEmail(toEmail, subject, `Eingebucht! Booking-ID: ${bookingId}. Bitte Gästedaten aktualisieren und CHF ${anzahlPlaetze * 50} überweisen.`, bodyHtml);
+}
+
+// ============================================================
+// ADMIN MENU & WAITLIST CONVERSION
+// ============================================================
+
+/**
+ * Erstellt das Admin-Menü beim Öffnen der Tabelle.
+ */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Fluss-Schänke Admin')
+    .addItem('Warteliste -> Reservation', 'convertWaitlistToReservation')
+    .addToUi();
+}
+
+/**
+ * Konvertiert eine Wartelisten-Zeile in eine reguläre Reservation mit Platzhalter-Gästen.
+ * Muss im Blatt 'Warteliste' ausgeführt werden, während die Zielzeile aktiv markiert ist.
+ */
+function convertWaitlistToReservation() {
+  const ui     = SpreadsheetApp.getUi();
+  const sheet  = SpreadsheetApp.getActiveSheet();
+
+  if (sheet.getName() !== SHEET_WAITLIST) {
+    ui.alert('Fehler: Bitte im Blatt "' + SHEET_WAITLIST + '" ausführen.');
+    return;
   }
+
+  const row = SpreadsheetApp.getActiveRange().getRow();
+  if (row < 2) {
+    ui.alert('Fehler: Bitte eine Datenzeile (nicht Kopfzeile) auswählen.');
+    return;
+  }
+
+  const rowData       = sheet.getRange(row, 1, 1, 7).getValues()[0];
+  const hauptVorname  = sanitizeSheetInput(String(rowData[0]));
+  const hauptNachname = sanitizeSheetInput(String(rowData[1]));
+  const hauptEmail    = sanitizeSheetInput(String(rowData[2])).toLowerCase();
+  const datum         = parseSheetDate(rowData[3]);
+  const anzahlPlaetze = parseInt(rowData[4], 10);
+  const status        = String(rowData[5]).trim();
+
+  if (status === 'Nachgerückt') {
+    ui.alert('Diese Person wurde bereits nachgerückt.');
+    return;
+  }
+
+  if (!datum || !hauptEmail || isNaN(anzahlPlaetze) || anzahlPlaetze < 1) {
+    ui.alert('Fehler: Unvollständige Daten in der Wartelisten-Zeile.');
+    return;
+  }
+
+  const bookingId     = 'RES-' + datum.replace(/-/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
+  const safeDatum     = "'" + datum;
+  const timestamp     = new Date();
+  const resSheet      = getOrCreateSheet();
+
+  for (let i = 1; i <= anzahlPlaetze; i++) {
+    const gVorname  = i === 1 ? hauptVorname  : 'Begleitung';
+    const gNachname = i === 1 ? hauptNachname : String(i);
+    const gEmail    = i === 1 ? hauptEmail    : '';
+    const gAllergie = 'Noch nicht definiert';
+    resSheet.appendRow([bookingId, safeDatum, hauptNachname, hauptEmail, gVorname, gNachname, gEmail, gAllergie, 'Aktiv', timestamp, false]);
+  }
+
+  // Wartelisten-Status aktualisieren
+  sheet.getRange(row, 6).setValue('Nachgerückt');
+
+  // Cache invalidieren
+  CacheService.getScriptCache().remove(CACHE_KEY);
+  refreshAvailabilityCache();
+
+  // Benachrichtigungs-E-Mail an den Kunden senden
+  sendWaitlistPromotionEmail(hauptEmail, hauptVorname, bookingId, datum, anzahlPlaetze);
+
+  ui.alert('Erfolg! ' + anzahlPlaetze + ' Platz/Plätze wurden für ' + hauptEmail + ' eingetragen (Booking-ID: ' + bookingId + '). Eine E-Mail wurde versendet.');
 }
 
 // ============================================================

@@ -84,6 +84,11 @@ function updateDateCardsAvailability() {
                 document.getElementById('booking-step-2')?.classList.add('hidden');
                 document.getElementById('booking-step-3')?.classList.add('hidden');
             }
+        } else if (avail < MIN_GUESTS) {
+            // Nicht genug Plätze für eine reguläre Buchung -> Warteliste
+            card.classList.remove('disabled');
+            badge.className = 'badge-availability badge-full';
+            badge.textContent = 'Warteliste';
         } else if (avail <= 5) {
             card.classList.remove('disabled');
             badge.className = 'badge-availability badge-warning';
@@ -107,24 +112,46 @@ function selectDate(isoDate) {
     if (avail <= 0) return;
 
     selectedDate = isoDate;
+    const isWaitlist = avail < MIN_GUESTS;
 
     EVENT_DATES.forEach(d => {
         document.getElementById(`date-card-${d.iso}`)?.classList.toggle('selected', d.iso === isoDate);
     });
 
-    const maxSeats = Math.min(MAX_GUESTS, avail);
+    const maxSeats = isWaitlist ? MAX_GUESTS : Math.min(MAX_GUESTS, avail);
     if (guestCount > maxSeats) guestCount = Math.max(MIN_GUESTS, maxSeats);
 
     document.getElementById('counter-val').textContent = guestCount;
 
     const subtitleEl = document.getElementById('guest-count-subtitle');
-    if (subtitleEl) subtitleEl.textContent = `Für wie viele Personen möchtest du am ${formatDateCH(isoDate)} reservieren?`;
+    if (subtitleEl) subtitleEl.textContent = `Für wie viele Personen möchtest du am ${formatDateCH(isoDate)} ${isWaitlist ? 'auf die Warteliste' : 'reservieren'}?`;
 
     document.getElementById('booking-step-2')?.classList.remove('hidden');
     document.getElementById('booking-step-3')?.classList.remove('hidden');
 
+    // Wartelisten-Modus: bestimmte Elemente aus-/einblenden
+    const guestsContainer = document.getElementById('guests-container');
+    const guestsHeading   = guestsContainer?.previousElementSibling; // <h3> vor dem Container
+    const summaryBox      = document.querySelector('.summary-box');
+    const agbWrapper      = document.getElementById('agb-checkbox')?.closest('div');
+    const submitBtn       = document.getElementById('btn-submit-booking');
+
+    if (isWaitlist) {
+        guestsContainer?.classList.add('hidden');
+        guestsHeading?.classList.add('hidden');
+        summaryBox?.classList.add('hidden');
+        agbWrapper?.classList.add('hidden');
+        if (submitBtn) submitBtn.textContent = 'Auf die Warteliste setzen';
+    } else {
+        guestsContainer?.classList.remove('hidden');
+        guestsHeading?.classList.remove('hidden');
+        summaryBox?.classList.remove('hidden');
+        agbWrapper?.classList.remove('hidden');
+        if (submitBtn) submitBtn.textContent = 'Reservation abschicken';
+    }
+
     updateGuestFormCards();
-    updateSummary();
+    if (!isWaitlist) updateSummary();
 
     setTimeout(() => {
         document.getElementById('booking-step-2')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -275,8 +302,14 @@ async function handleReservationSubmit(e) {
         return;
     }
 
+    // Wartelisten-Modus bestimmen
+    const info = availabilityData[selectedDate];
+    const booked = info?.booked ?? 0;
+    const avail = Math.max(0, 30 - booked);
+    const isWaitlist = avail < MIN_GUESTS;
+
     const agb = document.getElementById('agb-checkbox');
-    if (agb && !agb.checked) {
+    if (!isWaitlist && agb && !agb.checked) {
         alert('Bitte akzeptiere die Bedingungen zur Anzahlung.');
         return;
     }
@@ -306,52 +339,71 @@ async function handleReservationSubmit(e) {
     const hauptNachname = sanitizeForBackend(rawHauptNachname);
     const hauptEmail = sanitizeForBackend(rawHauptEmail, true);
 
-    const gaeste = [];
-    for (let i = 0; i < guestCount; i++) {
-        const rawVorname = document.getElementById(`gast-vorname-${i}`)?.value || '';
-        const rawNachname = document.getElementById(`gast-nachname-${i}`)?.value || '';
-        const rawEmail = document.getElementById(`gast-email-${i}`)?.value || '';
-        const rawAllergie = document.getElementById(`gast-allergie-${i}`)?.value || '';
-
-        if (!rawVorname.trim() || !rawNachname.trim()) {
-            alert(`Bitte gib Vor- und Nachname für Gast ${i + 1} an.`);
-            return;
-        }
-
-        if (hasInvalidCharacters(rawVorname) || hasInvalidCharacters(rawNachname) || hasInvalidCharacters(rawEmail, true) || hasInvalidCharacters(rawAllergie)) {
-            if (errorAlert) {
-                errorAlert.textContent = `Fehler: Unzulässige Sonderzeichen bei Gast ${i + 1}. Bitte nur Standardzeichen verwenden.`;
-                errorAlert.classList.remove('hidden');
-            }
-            window.scrollTo({ top: errorAlert.offsetTop - 100, behavior: 'smooth' });
-            return;
-        }
-
-        const vorname = sanitizeForBackend(rawVorname);
-        const nachname = sanitizeForBackend(rawNachname);
-        const email = sanitizeForBackend(rawEmail, true);
-        const allergie = sanitizeForBackend(rawAllergie);
-
-        gaeste.push({ vorname, nachname, email, allergien: allergie });
-    }
-
     const btn = document.getElementById('btn-submit-booking');
     const origText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner"></span> Wird verarbeitet...`;
 
     try {
-        const res = await api.createReservation(selectedDate, hauptNachname, hauptEmail, gaeste);
-
-        if (res.status === 'success') {
-            showSuccessView(res.bookingId, selectedDate, hauptEmail, gaeste);
-        } else {
-            if (errorAlert) {
-                errorAlert.textContent = res.message || 'Fehler beim Erstellen der Reservation.';
-                errorAlert.classList.remove('hidden');
+        if (isWaitlist) {
+            // --- Wartelisten-Pfad ---
+            const res = await api.joinWaitlist(selectedDate, hauptVorname, hauptNachname, hauptEmail, guestCount);
+            if (res.status === 'success') {
+                showSuccessView(null, selectedDate, hauptEmail, null, true);
+            } else {
+                if (errorAlert) {
+                    errorAlert.textContent = res.message || 'Fehler beim Eintragen auf die Warteliste.';
+                    errorAlert.classList.remove('hidden');
+                }
+                btn.disabled = false;
+                btn.innerHTML = origText;
             }
-            btn.disabled = false;
-            btn.innerHTML = origText;
+        } else {
+            // --- Regulärer Reservations-Pfad ---
+            const gaeste = [];
+            for (let i = 0; i < guestCount; i++) {
+                const rawVorname = document.getElementById(`gast-vorname-${i}`)?.value || '';
+                const rawNachname = document.getElementById(`gast-nachname-${i}`)?.value || '';
+                const rawEmail = document.getElementById(`gast-email-${i}`)?.value || '';
+                const rawAllergie = document.getElementById(`gast-allergie-${i}`)?.value || '';
+
+                if (!rawVorname.trim() || !rawNachname.trim()) {
+                    alert(`Bitte gib Vor- und Nachname für Gast ${i + 1} an.`);
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    return;
+                }
+
+                if (hasInvalidCharacters(rawVorname) || hasInvalidCharacters(rawNachname) || hasInvalidCharacters(rawEmail, true) || hasInvalidCharacters(rawAllergie)) {
+                    if (errorAlert) {
+                        errorAlert.textContent = `Fehler: Unzulässige Sonderzeichen bei Gast ${i + 1}. Bitte nur Standardzeichen verwenden.`;
+                        errorAlert.classList.remove('hidden');
+                    }
+                    window.scrollTo({ top: errorAlert.offsetTop - 100, behavior: 'smooth' });
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    return;
+                }
+
+                const vorname = sanitizeForBackend(rawVorname);
+                const nachname = sanitizeForBackend(rawNachname);
+                const email = sanitizeForBackend(rawEmail, true);
+                const allergie = sanitizeForBackend(rawAllergie);
+
+                gaeste.push({ vorname, nachname, email, allergien: allergie });
+            }
+
+            const res = await api.createReservation(selectedDate, hauptNachname, hauptEmail, gaeste);
+            if (res.status === 'success') {
+                showSuccessView(res.bookingId, selectedDate, hauptEmail, gaeste, false);
+            } else {
+                if (errorAlert) {
+                    errorAlert.textContent = res.message || 'Fehler beim Erstellen der Reservation.';
+                    errorAlert.classList.remove('hidden');
+                }
+                btn.disabled = false;
+                btn.innerHTML = origText;
+            }
         }
     } catch (err) {
         if (errorAlert) {
@@ -367,7 +419,7 @@ async function handleReservationSubmit(e) {
 // SUCCESS VIEW
 // ============================================================
 
-function showSuccessView(bookingId, isoDate, email, gaeste) {
+function showSuccessView(bookingId, isoDate, email, gaeste, isWaitlist = false) {
     document.getElementById('booking-form-wrapper')?.classList.add('hidden');
     document.querySelector('.hero-section')?.classList.add('hidden');
     document.querySelector('.info-sections')?.classList.add('hidden');
@@ -375,42 +427,77 @@ function showSuccessView(bookingId, isoDate, email, gaeste) {
     const sv = document.getElementById('booking-success-view');
     sv?.classList.remove('hidden');
 
-    document.getElementById('success-booking-id').textContent = sanitizeForDOM(bookingId);
-    document.getElementById('success-date').textContent = sanitizeForDOM(formatDateCH(isoDate));
-    document.getElementById('success-seats').textContent = `${gaeste.length} ${gaeste.length === 1 ? 'Platz' : 'Plätze'}`;
-    document.getElementById('success-email').textContent = sanitizeForDOM(email);
+    if (isWaitlist) {
+        // --- Wartelisten-Erfolgsansicht ---
+        const h2 = sv.querySelector('h2');
+        if (h2) h2.textContent = 'Auf der Warteliste!';
 
-    const gl = document.getElementById('success-guest-list');
-    if (gl) {
-        gl.replaceChildren();
+        const desc = sv.querySelector('p');
+        if (desc) {
+            desc.innerHTML = `Du stehst auf der Warteliste für den <strong>${sanitizeForDOM(formatDateCH(isoDate))}</strong>. Eine Bestätigung wurde an <strong id="success-email"></strong> geschickt (Check Spam!). Sobald Plätze frei werden, melden wir uns – <strong>keine Zahlung notwendig</strong> bis dahin.`;
+        }
+        document.getElementById('success-email').textContent = sanitizeForDOM(email);
 
-        gaeste.forEach((g, i) => {
-            const row = document.createElement('div');
-            row.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;';
+        // Booking-ID-Box, QR-Code und Gästeliste ausblenden
+        sv.querySelector('.booking-id-box')?.classList.add('hidden');
+        sv.querySelectorAll('[style*="max-width: 240px"]').forEach(el => el.closest('div')?.classList.add('hidden'));
 
-            const nameDiv = document.createElement('div');
-            const nameStrong = document.createElement('strong');
-            nameStrong.textContent = `Gast ${i + 1}: `;
-            nameDiv.appendChild(nameStrong);
-            nameDiv.appendChild(document.createTextNode(`${sanitizeForDOM(g.vorname)} ${sanitizeForDOM(g.nachname)}`));
+        const detailsBox = sv.querySelector('[style*="bg-card-subtle"]') ?? sv.querySelector('div[style*="padding: 24px"]');
+        if (detailsBox) {
+            detailsBox.innerHTML = `
+                <h3 style="color:var(--primary-dark);margin-top:0;margin-bottom:14px;">Wartelisten-Details</h3>
+                <p><strong>Datum:</strong> <span id="success-date"></span></p>
+                <p><strong>Gewünschte Plätze:</strong> <span id="success-seats"></span></p>`;
+        }
 
-            const allergieDiv = document.createElement('div');
-            allergieDiv.className = 'text-muted';
-            const allergieEm = document.createElement('em');
-            allergieEm.textContent = sanitizeForDOM(g.allergien);
-            allergieDiv.appendChild(allergieEm);
+        document.getElementById('success-date').textContent = sanitizeForDOM(formatDateCH(isoDate));
+        document.getElementById('success-seats').textContent = `${guestCount} ${guestCount === 1 ? 'Platz' : 'Plätze'}`;
 
-            row.appendChild(nameDiv);
-            row.appendChild(allergieDiv);
-            gl.appendChild(row);
-        });
-    }
+        // AGB-Hinweis ausblenden
+        sv.querySelector('.alert.alert-success')?.classList.add('hidden');
+    } else {
+        // --- Reguläre Reservations-Erfolgsansicht ---
+        document.getElementById('success-booking-id').textContent = sanitizeForDOM(bookingId);
+        document.getElementById('success-date').textContent = sanitizeForDOM(formatDateCH(isoDate));
+        document.getElementById('success-seats').textContent = `${gaeste.length} ${gaeste.length === 1 ? 'Platz' : 'Plätze'}`;
+        document.getElementById('success-email').textContent = sanitizeForDOM(email);
 
-    const btnCopy = document.getElementById('btn-copy-id');
-    if (btnCopy) {
-        btnCopy.onclick = () => {
-            navigator.clipboard.writeText(bookingId).then(() => alert('Booking-ID kopiert!'));
-        };
+        // Booking-ID-Box und QR sicherstellen sichtbar
+        sv.querySelector('.booking-id-box')?.classList.remove('hidden');
+        sv.querySelector('.alert.alert-success')?.classList.remove('hidden');
+
+        const gl = document.getElementById('success-guest-list');
+        if (gl) {
+            gl.replaceChildren();
+
+            gaeste.forEach((g, i) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;';
+
+                const nameDiv = document.createElement('div');
+                const nameStrong = document.createElement('strong');
+                nameStrong.textContent = `Gast ${i + 1}: `;
+                nameDiv.appendChild(nameStrong);
+                nameDiv.appendChild(document.createTextNode(`${sanitizeForDOM(g.vorname)} ${sanitizeForDOM(g.nachname)}`));
+
+                const allergieDiv = document.createElement('div');
+                allergieDiv.className = 'text-muted';
+                const allergieEm = document.createElement('em');
+                allergieEm.textContent = sanitizeForDOM(g.allergien);
+                allergieDiv.appendChild(allergieEm);
+
+                row.appendChild(nameDiv);
+                row.appendChild(allergieDiv);
+                gl.appendChild(row);
+            });
+        }
+
+        const btnCopy = document.getElementById('btn-copy-id');
+        if (btnCopy) {
+            btnCopy.onclick = () => {
+                navigator.clipboard.writeText(bookingId).then(() => alert('Booking-ID kopiert!'));
+            };
+        }
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
