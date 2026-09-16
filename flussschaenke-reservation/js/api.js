@@ -142,7 +142,7 @@ export const api = {
     /**
      * Auf die Warteliste setzen
      */
-    async joinWaitlist(datum, hauptVorname, hauptNachname, hauptEmail, anzahlPlaetze) {
+    async joinWaitlist(datum, hauptNachname, hauptEmail, hauptVorname, anzahlPlaetze) {
         return await this.post('joinWaitlist', {
             datum,
             hauptVorname,

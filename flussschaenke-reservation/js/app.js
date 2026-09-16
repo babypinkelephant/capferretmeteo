@@ -26,6 +26,7 @@ let guestCount = MIN_GUESTS;
 let selectedDate = null;
 let availabilityData = {};
 let currentManageBooking = null;
+let isWaitlistMode = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     renderDateCards();
@@ -84,8 +85,8 @@ function updateDateCardsAvailability() {
                 document.getElementById('booking-step-2')?.classList.add('hidden');
                 document.getElementById('booking-step-3')?.classList.add('hidden');
             }
-        } else if (avail < MIN_GUESTS) {
-            // Nicht genug Plätze für eine reguläre Buchung -> Warteliste
+        } else if (avail > 0 && avail < MIN_GUESTS) {
+            // Genug Plätze für Warteliste, aber nicht für reguläre Buchung
             card.classList.remove('disabled');
             badge.className = 'badge-availability badge-full';
             badge.textContent = 'Warteliste';
@@ -112,50 +113,73 @@ function selectDate(isoDate) {
     if (avail <= 0) return;
 
     selectedDate = isoDate;
-    const isWaitlist = avail < MIN_GUESTS;
+    isWaitlistMode = (avail > 0 && avail < MIN_GUESTS);
 
     EVENT_DATES.forEach(d => {
         document.getElementById(`date-card-${d.iso}`)?.classList.toggle('selected', d.iso === isoDate);
     });
 
-    const maxSeats = isWaitlist ? MAX_GUESTS : Math.min(MAX_GUESTS, avail);
-    if (guestCount > maxSeats) guestCount = Math.max(MIN_GUESTS, maxSeats);
+    // Counter-Grenzen setzen: Warteliste 1-8, normal MIN_GUESTS-avail
+    if (isWaitlistMode) {
+        if (guestCount < 1) guestCount = 1;
+        if (guestCount > MAX_GUESTS) guestCount = MAX_GUESTS;
+    } else {
+        const maxSeats = Math.min(MAX_GUESTS, avail);
+        if (guestCount < MIN_GUESTS) guestCount = MIN_GUESTS;
+        if (guestCount > maxSeats) guestCount = maxSeats;
+    }
 
     document.getElementById('counter-val').textContent = guestCount;
 
     const subtitleEl = document.getElementById('guest-count-subtitle');
-    if (subtitleEl) subtitleEl.textContent = `Für wie viele Personen möchtest du am ${formatDateCH(isoDate)} ${isWaitlist ? 'auf die Warteliste' : 'reservieren'}?`;
+    if (subtitleEl) {
+        subtitleEl.textContent = isWaitlistMode
+            ? `Für wie viele Personen möchtest du dich am ${formatDateCH(isoDate)} auf die Warteliste setzen?`
+            : `Für wie viele Personen möchtest du am ${formatDateCH(isoDate)} reservieren?`;
+    }
 
     document.getElementById('booking-step-2')?.classList.remove('hidden');
     document.getElementById('booking-step-3')?.classList.remove('hidden');
 
-    // Wartelisten-Modus: bestimmte Elemente aus-/einblenden
-    const guestsContainer = document.getElementById('guests-container');
-    const guestsHeading   = guestsContainer?.previousElementSibling; // <h3> vor dem Container
-    const summaryBox      = document.querySelector('.summary-box');
-    const agbWrapper      = document.getElementById('agb-checkbox')?.closest('div');
-    const submitBtn       = document.getElementById('btn-submit-booking');
-
-    if (isWaitlist) {
-        guestsContainer?.classList.add('hidden');
-        guestsHeading?.classList.add('hidden');
-        summaryBox?.classList.add('hidden');
-        agbWrapper?.classList.add('hidden');
-        if (submitBtn) submitBtn.textContent = 'Auf die Warteliste setzen';
-    } else {
-        guestsContainer?.classList.remove('hidden');
-        guestsHeading?.classList.remove('hidden');
-        summaryBox?.classList.remove('hidden');
-        agbWrapper?.classList.remove('hidden');
-        if (submitBtn) submitBtn.textContent = 'Reservation abschicken';
-    }
-
+    toggleWaitlistUI();
     updateGuestFormCards();
-    if (!isWaitlist) updateSummary();
+    if (!isWaitlistMode) updateSummary();
 
     setTimeout(() => {
         document.getElementById('booking-step-2')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 50);
+}
+
+/**
+ * Schaltet alle UI-Elemente abhängig vom isWaitlistMode-State.
+ * Kapselt alle DOM-Manipulationen für den Wartelisten-Modus.
+ */
+function toggleWaitlistUI() {
+    const waitlistAlert  = document.getElementById('waitlist-alert');
+    const guestsHeading  = document.getElementById('guests-container')?.previousElementSibling;
+    const guestsContainer = document.getElementById('guests-container');
+    const summaryBox     = document.querySelector('.summary-box');
+    const agbCheckbox    = document.getElementById('agb-checkbox');
+    const agbWrapper     = agbCheckbox?.closest('div');
+    const submitBtn      = document.getElementById('btn-submit-booking');
+
+    if (isWaitlistMode) {
+        waitlistAlert?.classList.remove('hidden');
+        guestsContainer?.classList.add('hidden');
+        guestsHeading?.classList.add('hidden');
+        summaryBox?.classList.add('hidden');
+        agbWrapper?.classList.add('hidden');
+        if (agbCheckbox) agbCheckbox.required = false;
+        if (submitBtn) submitBtn.textContent = 'Auf die Warteliste setzen';
+    } else {
+        waitlistAlert?.classList.add('hidden');
+        guestsContainer?.classList.remove('hidden');
+        guestsHeading?.classList.remove('hidden');
+        summaryBox?.classList.remove('hidden');
+        agbWrapper?.classList.remove('hidden');
+        if (agbCheckbox) agbCheckbox.required = true;
+        if (submitBtn) submitBtn.textContent = 'Reservation abschicken';
+    }
 }
 
 // ============================================================
@@ -164,21 +188,28 @@ function selectDate(isoDate) {
 
 function setupEventListeners() {
     document.getElementById('btn-minus')?.addEventListener('click', () => {
-        if (guestCount > MIN_GUESTS) {
+        const minVal = isWaitlistMode ? 1 : MIN_GUESTS;
+        if (guestCount > minVal) {
             guestCount--;
             document.getElementById('counter-val').textContent = guestCount;
-            updateGuestFormCards();
-            updateSummary();
+            if (!isWaitlistMode) {
+                updateGuestFormCards();
+                updateSummary();
+            }
         }
     });
 
     document.getElementById('btn-plus')?.addEventListener('click', () => {
-        const maxSeats = selectedDate ? Math.min(MAX_GUESTS, availabilityData[selectedDate]?.available || 30) : MAX_GUESTS;
-        if (guestCount < maxSeats) {
+        const maxVal = isWaitlistMode
+            ? MAX_GUESTS
+            : selectedDate ? Math.min(MAX_GUESTS, availabilityData[selectedDate]?.available || 30) : MAX_GUESTS;
+        if (guestCount < maxVal) {
             guestCount++;
             document.getElementById('counter-val').textContent = guestCount;
-            updateGuestFormCards();
-            updateSummary();
+            if (!isWaitlistMode) {
+                updateGuestFormCards();
+                updateSummary();
+            }
         }
     });
 
@@ -302,14 +333,8 @@ async function handleReservationSubmit(e) {
         return;
     }
 
-    // Wartelisten-Modus bestimmen
-    const info = availabilityData[selectedDate];
-    const booked = info?.booked ?? 0;
-    const avail = Math.max(0, 30 - booked);
-    const isWaitlist = avail < MIN_GUESTS;
-
     const agb = document.getElementById('agb-checkbox');
-    if (!isWaitlist && agb && !agb.checked) {
+    if (!isWaitlistMode && agb && !agb.checked) {
         alert('Bitte akzeptiere die Bedingungen zur Anzahlung.');
         return;
     }
@@ -345,9 +370,9 @@ async function handleReservationSubmit(e) {
     btn.innerHTML = `<span class="spinner"></span> Wird verarbeitet...`;
 
     try {
-        if (isWaitlist) {
+        if (isWaitlistMode) {
             // --- Wartelisten-Pfad ---
-            const res = await api.joinWaitlist(selectedDate, hauptVorname, hauptNachname, hauptEmail, guestCount);
+            const res = await api.joinWaitlist(selectedDate, hauptNachname, hauptEmail, hauptVorname, guestCount);
             if (res.status === 'success') {
                 showSuccessView(null, selectedDate, hauptEmail, null, true);
             } else {
