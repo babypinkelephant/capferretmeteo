@@ -144,13 +144,13 @@ function selectDate(isoDate) {
  * Kapselt alle DOM-Manipulationen für den Wartelisten-Modus.
  */
 function toggleWaitlistUI() {
-    const waitlistAlert  = document.getElementById('waitlist-alert');
-    const guestsHeading  = document.getElementById('guests-container')?.previousElementSibling;
+    const waitlistAlert = document.getElementById('waitlist-alert');
+    const guestsHeading = document.getElementById('guests-container')?.previousElementSibling;
     const guestsContainer = document.getElementById('guests-container');
-    const summaryBox     = document.querySelector('.summary-box');
-    const agbCheckbox    = document.getElementById('agb-checkbox');
-    const agbWrapper     = agbCheckbox?.closest('div');
-    const submitBtn      = document.getElementById('btn-submit-booking');
+    const summaryBox = document.querySelector('.summary-box');
+    const agbCheckbox = document.getElementById('agb-checkbox');
+    const agbWrapper = agbCheckbox?.closest('div');
+    const submitBtn = document.getElementById('btn-submit-booking');
 
     if (isWaitlistMode) {
         waitlistAlert?.classList.remove('hidden');
@@ -255,6 +255,10 @@ function updateGuestFormCards() {
         const dE = saved[i]?.e || (isHaupt ? hauptE : '');
         const dA = saved[i]?.a || 'Keine Einschränkungen';
 
+        // Verhindert den HTML5 Silent Validation Failure bei versteckten Feldern
+        const reqAttr = isWaitlistMode ? '' : 'required';
+        const reqEmailAttr = (isHaupt && !isWaitlistMode) ? 'required' : '';
+
         html += `
             <div class="guest-card">
                 <div class="guest-card-header">
@@ -266,21 +270,21 @@ function updateGuestFormCards() {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="gast-vorname-${i}">Vorname *</label>
-                        <input type="text" id="gast-vorname-${i}" value="${escHtml(dV)}" placeholder="z. B. Laura" required>
+                        <input type="text" id="gast-vorname-${i}" value="${escHtml(dV)}" placeholder="z. B. Laura" ${reqAttr}>
                     </div>
                     <div class="form-group">
                         <label for="gast-nachname-${i}">Nachname *</label>
-                        <input type="text" id="gast-nachname-${i}" value="${escHtml(dN)}" placeholder="z. B. Keller" required>
+                        <input type="text" id="gast-nachname-${i}" value="${escHtml(dN)}" placeholder="z. B. Keller" ${reqAttr}>
                     </div>
                     <div class="form-group">
                         <label for="gast-email-${i}">E-Mail ${isHaupt ? '*' : '(optional)'}</label>
-                        <input type="email" id="gast-email-${i}" value="${escHtml(dE)}" placeholder="laura@beispiel.ch" ${isHaupt ? 'required' : ''}>
+                        <input type="email" id="gast-email-${i}" value="${escHtml(dE)}" placeholder="laura@beispiel.ch" ${reqEmailAttr}>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="gast-allergie-${i}">Ernährungspräferenz *</label>
-                        <select id="gast-allergie-${i}" required>
+                        <select id="gast-allergie-${i}" ${reqAttr}>
                             ${PREFERENCE_OPTIONS.map(o => `<option value="${o.value}" ${dA === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
                         </select>
                     </div>
@@ -297,7 +301,6 @@ function updateGuestFormCards() {
         document.getElementById(`gast-allergie-${i}`)?.addEventListener('change', updateSummary);
     }
 }
-
 // ============================================================
 // SUMMARY
 // ============================================================
