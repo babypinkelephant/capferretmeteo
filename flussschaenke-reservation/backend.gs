@@ -175,15 +175,18 @@ function joinWaitlist(payload) {
   let wlSheet = ss.getSheetByName(SHEET_WAITLIST);
   if (!wlSheet) {
     wlSheet = ss.insertSheet(SHEET_WAITLIST);
-    wlSheet.appendRow(['Haupt_Vorname','Haupt_Nachname','Haupt_Email','Datum','Anzahl_Plaetze','Status','Timestamp']);
-    wlSheet.getRange(1,1,1,7).setFontWeight('bold').setBackground('#EFEFEF');
+    wlSheet.appendRow(['Datum', 'Haupt_Vorname', 'Haupt_Nachname', 'Haupt_Email', 'Anzahl_Plaetze', 'Status', 'Timestamp', 'Nachrücken']);
+    wlSheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#EFEFEF');
   }
 
   const timestamp = new Date().toISOString();
-  wlSheet.appendRow([hauptVorname, hauptNachname, hauptEmail, "'" + datum, anzahlPlaetze, 'Ausstehend', timestamp]);
+  wlSheet.appendRow(["'" + datum, hauptVorname, hauptNachname, hauptEmail, anzahlPlaetze, 'Ausstehend', timestamp, false]);
 
-  sendWaitlistConfirmationEmail(hauptEmail, hauptVorname, datum, anzahlPlaetze);
-  return outputJSON({ status: 'success', message: 'Du wurdest erfolgreich auf die Warteliste gesetzt.' });
+  const subject = 'Auf der Warteliste – Fluss-Schänke Zürich';
+  const mailText = `Wir haben dich für den ${datum} mit ${anzahlPlaetze} Personen auf die Warteliste gesetzt. Sobald Plätze frei werden, melden wir uns.`;
+  dispatchEmail(hauptEmail, subject, mailText);
+
+  return outputJSON({ status: 'success' });
 }
 
 function updateReservation(payload) {
@@ -596,13 +599,61 @@ function handleStatusChange(e) {
   if (!e || !e.range) return;
   
   const sheet = e.range.getSheet();
-  if (sheet.getName() !== SHEET_NAME) return;
-  
+  const sheetName = sheet.getName();
   const row = e.range.getRow();
   const col = e.range.getColumn();
   
+  if (row < 2) return;
+
+  // --------------------------------------------------------
+  // WAITLIST PROMOTION LOGIC (SHEET_WAITLIST Column 8 / H)
+  // --------------------------------------------------------
+  if (sheetName === SHEET_WAITLIST && col === 8) {
+    const isChecked = e.range.getValue() === true || String(e.range.getValue()).toUpperCase() === 'TRUE';
+    if (!isChecked) return;
+
+    const lock = LockService.getDocumentLock();
+    try {
+      lock.waitLock(5000);
+
+      const datum = parseSheetDate(sheet.getRange(row, 1).getValue());
+      const hauptVorname = String(sheet.getRange(row, 2).getValue()).trim();
+      const hauptNachname = String(sheet.getRange(row, 3).getValue()).trim();
+      const hauptEmail = String(sheet.getRange(row, 4).getValue()).trim();
+      const anzahlPlaetze = parseInt(sheet.getRange(row, 5).getValue(), 10);
+      const status = String(sheet.getRange(row, 6).getValue()).trim();
+
+      if (status === 'Nachgerückt') return;
+
+      const bookingId = 'RES-' + datum.replace(/-/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
+      const resSheet = getOrCreateSheet();
+      const safeDatumString = "'" + datum;
+      const timestamp = new Date().toISOString();
+
+      for (let i = 1; i <= anzahlPlaetze; i++) {
+        resSheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, 'Begleitung', i, hauptEmail, 'Noch nicht definiert', 'Aktiv', timestamp, false]);
+      }
+
+      sheet.getRange(row, 6).setValue('Nachgerückt');
+
+      CacheService.getScriptCache().remove(CACHE_KEY);
+      refreshAvailabilityCache();
+
+      const subject = 'Plätze verfügbar – Fluss-Schänke Zürich';
+      const mailText = `Gute Nachrichten: Es sind Plätze frei geworden und wir haben dich fest eingebucht (Booking-ID: ${bookingId}). Logge dich zwingend unter 'Reservation verwalten' auf fluss-schaenke.ch ein, um die Platzhalter-Gästedaten zu überschreiben und die Anzahlung zu leisten.`;
+      dispatchEmail(hauptEmail, subject, mailText);
+    } catch (err) {
+      Logger.log('Fehler bei Wartelisten-Umbuchung: ' + err);
+    } finally {
+      lock.releaseLock();
+    }
+    return;
+  }
+
+  if (sheetName !== SHEET_NAME) return;
+  
   // Hört ausschliesslich auf Spalte I (9 - Status) und K (11 - Payment)
-  if ((col !== 9 && col !== 11) || row < 2) return;
+  if (col !== 9 && col !== 11) return;
   
   const lock = LockService.getDocumentLock();
   try {
