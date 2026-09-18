@@ -75,18 +75,8 @@ function updateDateCardsAvailability() {
         const booked = parseInt(info?.booked, 10) || 0;
         const avail = Math.max(0, MAX_SEATS - booked);
 
-        if (avail <= 0) {
-            card.classList.add('disabled');
-            badge.className = 'badge-availability badge-full';
-            badge.textContent = 'Ausgebucht';
-            if (selectedDate === d.iso) {
-                selectedDate = null;
-                card.classList.remove('selected');
-                document.getElementById('booking-step-2')?.classList.add('hidden');
-                document.getElementById('booking-step-3')?.classList.add('hidden');
-            }
-        } else if (avail > 0 && avail < MIN_GUESTS) {
-            // Genug Plätze für Warteliste, aber nicht für reguläre Buchung
+        if (avail < MIN_GUESTS) {
+            // Genug Plätze für Warteliste (auch bei 0 freien Plätzen), aber nicht für reguläre Buchung
             card.classList.remove('disabled');
             badge.className = 'badge-availability badge-full';
             badge.textContent = 'Warteliste';
@@ -110,10 +100,9 @@ function selectDate(isoDate) {
     const info = availabilityData[isoDate];
     const booked = info?.booked ?? 0;
     const avail = Math.max(0, 30 - booked);
-    if (avail <= 0) return;
 
     selectedDate = isoDate;
-    isWaitlistMode = (avail > 0 && avail < MIN_GUESTS);
+    isWaitlistMode = (avail < MIN_GUESTS);
 
     EVENT_DATES.forEach(d => {
         document.getElementById(`date-card-${d.iso}`)?.classList.toggle('selected', d.iso === isoDate);

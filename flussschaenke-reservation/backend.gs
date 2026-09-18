@@ -182,9 +182,7 @@ function joinWaitlist(payload) {
   const timestamp = new Date().toISOString();
   wlSheet.appendRow(["'" + datum, hauptVorname, hauptNachname, hauptEmail, anzahlPlaetze, 'Ausstehend', timestamp, false]);
 
-  const subject = 'Auf der Warteliste – Fluss-Schänke Zürich';
-  const mailText = `Wir haben dich für den ${datum} mit ${anzahlPlaetze} Personen auf die Warteliste gesetzt. Sobald Plätze frei werden, melden wir uns.`;
-  dispatchEmail(hauptEmail, subject, mailText);
+  sendWaitlistConfirmationEmail(hauptEmail, hauptVorname, datum, anzahlPlaetze);
 
   return outputJSON({ status: 'success' });
 }
@@ -639,9 +637,7 @@ function handleStatusChange(e) {
       CacheService.getScriptCache().remove(CACHE_KEY);
       refreshAvailabilityCache();
 
-      const subject = 'Plätze verfügbar – Fluss-Schänke Zürich';
-      const mailText = `Gute Nachrichten: Es sind Plätze frei geworden und wir haben dich fest eingebucht (Booking-ID: ${bookingId}). Logge dich zwingend unter 'Reservation verwalten' auf fluss-schaenke.ch ein, um die Platzhalter-Gästedaten zu überschreiben und die Anzahlung zu leisten.`;
-      dispatchEmail(hauptEmail, subject, mailText);
+      sendWaitlistPromotionEmail(hauptEmail, hauptVorname, bookingId, datum, anzahlPlaetze);
     } catch (err) {
       Logger.log('Fehler bei Wartelisten-Umbuchung: ' + err);
     } finally {
