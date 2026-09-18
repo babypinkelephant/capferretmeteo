@@ -138,17 +138,16 @@ export const api = {
             gaeste
         });
     },
-
     /**
-     * Auf die Warteliste setzen
-     */
+         * Auf die Warteliste setzen
+         */
     async joinWaitlist(datum, hauptNachname, hauptEmail, hauptVorname, anzahlPlaetze) {
         return await this.post('joinWaitlist', {
-            datum,
-            hauptVorname,
-            hauptNachname,
-            hauptEmail,
-            anzahlPlaetze
+            datum: datum,
+            hauptNachname: hauptNachname,
+            hauptEmail: hauptEmail,
+            hauptVorname: hauptVorname,
+            anzahlPlaetze: anzahlPlaetze
         });
     }
 };
