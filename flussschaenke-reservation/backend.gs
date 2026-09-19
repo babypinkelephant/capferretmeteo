@@ -145,7 +145,7 @@ function createReservation(payload) {
     const gEmail = sanitizeSheetInput(gast.email);
     const gAllergie = sanitizeSheetInput(gast.allergien) || 'Keine Einschränkungen';
     
-    sheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, vName, nName, gEmail, gAllergie, 'Aktiv', timestamp, false, hauptTelefon]);
+    sheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, vName, nName, gEmail, gAllergie, 'Aktiv', timestamp, false, "'" + hauptTelefon]);
   });
 
   CacheService.getScriptCache().remove(CACHE_KEY);
@@ -182,7 +182,7 @@ function joinWaitlist(payload) {
   }
 
   const timestamp = new Date().toISOString();
-  wlSheet.appendRow(["'" + datum, anzahlPlaetze, hauptVorname, hauptNachname, hauptEmail, hauptTelefon, 'Ausstehend', timestamp, false]);
+  wlSheet.appendRow(["'" + datum, anzahlPlaetze, hauptVorname, hauptNachname, hauptEmail, "'" + hauptTelefon, 'Ausstehend', timestamp, false]);
 
   sendWaitlistConfirmationEmail(hauptEmail, hauptVorname, datum, anzahlPlaetze);
 
@@ -300,7 +300,7 @@ function parseSheetDate(cellValue) {
 
 function sanitizeSheetInput(str) {
   if (!str) return '';
-  return String(str).replace(/^[=+\-@\s]+/g, '').trim();
+  return String(str).replace(/^[=+\-@]+/g, '').trim();
 }
 
 function escapeHtml(str) {
@@ -632,7 +632,7 @@ function handleStatusChange(e) {
       const timestamp = new Date().toISOString();
 
       for (let i = 1; i <= anzahlPlaetze; i++) {
-        resSheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, 'Begleitung', i, hauptEmail, 'Noch nicht definiert', 'Aktiv', timestamp, false, hauptTelefon]);
+        resSheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, 'Begleitung', i, hauptEmail, 'Noch nicht definiert', 'Aktiv', timestamp, false, "'" + hauptTelefon]);
       }
 
       sheet.getRange(row, 7).setValue('Nachgerückt');
