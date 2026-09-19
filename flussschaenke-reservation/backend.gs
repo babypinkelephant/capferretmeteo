@@ -114,7 +114,7 @@ function createReservation(payload) {
   const datum = sanitizeSheetInput(payload.datum);
   const hauptEmail = sanitizeSheetInput(payload.hauptEmail).toLowerCase();
   const hauptNachname = sanitizeSheetInput(payload.hauptNachname);
-  const hauptTelefon = sanitizePhoneBackend(payload.hauptTelefon);
+  const hauptTelefon = sanitizeSheetInput(payload.hauptTelefon);
   const gaeste = payload.gaeste || [];
 
   if (!OPEN_DATES.includes(datum)) return outputJSON({ status: 'error', message: 'Ungültiges Veranstaltungsdatum.' });
@@ -145,7 +145,7 @@ function createReservation(payload) {
     const gEmail = sanitizeSheetInput(gast.email);
     const gAllergie = sanitizeSheetInput(gast.allergien) || 'Keine Einschränkungen';
     
-    sheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, vName, nName, gEmail, gAllergie, 'Aktiv', timestamp, false, hauptTelefon]);
+    sheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, vName, nName, gEmail, gAllergie, 'Aktiv', timestamp, false, "'" + hauptTelefon]);
   });
 
   CacheService.getScriptCache().remove(CACHE_KEY);
@@ -160,7 +160,7 @@ function joinWaitlist(payload) {
   const hauptVorname   = sanitizeSheetInput(payload.hauptVorname);
   const hauptNachname  = sanitizeSheetInput(payload.hauptNachname);
   const hauptEmail     = sanitizeSheetInput(payload.hauptEmail).toLowerCase();
-  const hauptTelefon   = sanitizePhoneBackend(payload.hauptTelefon);
+  const hauptTelefon   = sanitizeSheetInput(payload.hauptTelefon);
   const anzahlPlaetze  = parseInt(payload.anzahlPlaetze, 10);
 
   if (!datum || !hauptVorname || !hauptNachname || !hauptEmail || !hauptTelefon) {
@@ -182,7 +182,7 @@ function joinWaitlist(payload) {
   }
 
   const timestamp = new Date().toISOString();
-  wlSheet.appendRow(["'" + datum, anzahlPlaetze, hauptVorname, hauptNachname, hauptEmail, hauptTelefon, 'Ausstehend', timestamp, false]);
+  wlSheet.appendRow(["'" + datum, anzahlPlaetze, hauptVorname, hauptNachname, hauptEmail, "'" + hauptTelefon, 'Ausstehend', timestamp, false]);
 
   sendWaitlistConfirmationEmail(hauptEmail, hauptVorname, datum, anzahlPlaetze);
 
@@ -301,12 +301,6 @@ function parseSheetDate(cellValue) {
 function sanitizeSheetInput(str) {
   if (!str) return '';
   return String(str).replace(/^[=+\-@]+/g, '').trim();
-}
-
-function sanitizePhoneBackend(str) {
-  if (!str) return '';
-  const cleaned = String(str).replace(/[^0-9+\s]/g, '').trim();
-  return "'" + cleaned;
 }
 
 function escapeHtml(str) {
@@ -492,28 +486,43 @@ function sendWaitlistConfirmationEmail(toEmail, vorname, datumStr, anzahlPlaetze
 
 function sendWaitlistPromotionEmail(toEmail, vorname, bookingId, datumStr, anzahlPlaetze) {
   const formattedDate = formatDateCH(datumStr);
+  const betrag = anzahlPlaetze * 50;
   const subject = `Plätze frei – wir haben dich eingebucht! – Fluss-Schänke Zürich (${formattedDate})`;
+  
   const bodyHtml = `
     <div style="font-family:sans-serif;color:#4A3828;max-width:600px;margin:0 auto;border:1px solid #EAE0D5;border-radius:12px;padding:28px;background:#FDFBF7;">
       <h2 style="color:#A06840;border-bottom:2px solid #C8956C;padding-bottom:12px;">Fluss-Schänke Zürich &middot; Limmatelier</h2>
       <p>Ciao ${escapeHtml(vorname)}! Gute Neuigkeiten: Es sind Plätze frei geworden und wir haben dich mit <strong>${anzahlPlaetze} ${anzahlPlaetze === 1 ? 'Platz' : 'Plätzen'}</strong> für den <strong>${formattedDate}</strong> eingebucht.</p>
+      
+      <div style="background:#FFF;border:1px solid #C8956C;padding:20px;border-radius:8px;margin:24px 0;">
+        <h3 style="color:#A06840;margin-top:0;margin-bottom:12px;">Zwei Schritte notwendig:</h3>
+        <ol style="padding-left:20px;line-height:1.6;margin-bottom:16px;">
+          <li><strong>Logge dich zwingend</strong> unter <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch</a> ein (Button "Reservation verwalten") und überschreibe die Platzhalter-Gästedaten mit deinen Angaben.</li>
+          <li><strong>Bezahle die Anzahlung</strong> von <strong>CHF ${betrag}.&ndash;</strong> (${anzahlPlaetze} &times; CHF 50) innert 48 Stunden.</li>
+        </ol>
+        <p style="margin-top:0;font-size:0.95em;color:#4A3828;">Scanne den QR-Code mit deiner E-Banking App oder löse die Überweisung manuell aus:</p>
+        
+        <div style="background:#FDF9EE;padding:14px;border-radius:6px;font-family:monospace;font-size:0.95em;margin-bottom:20px;line-height:1.5;">
+          <strong>Konto:</strong> CH61 0070 0114 8069 5993 4<br>
+          <strong>Empfänger:</strong> Verein Flusshüsli, 8037 Zürich<br>
+          <strong>Zweck:</strong> ${escapeHtml(bookingId)}
+        </div>
+        
+        <div style="text-align:center;">
+          <img src="https://fluss-schaenke.ch/img/twint.png" alt="QR-Code für Zahlung" style="width:100%;max-width:240px;border-radius:8px;border:1px solid #EAE0D5;">
+        </div>
+      </div>
+
       <div style="background:#FDF9EE;border-left:4px solid #C8956C;padding:14px;border-radius:6px;margin:18px 0;">
         <strong>Booking-ID:</strong> <code style="font-size:1.1em;background:#FFF;padding:2px 6px;border-radius:4px;">${escapeHtml(bookingId)}</code><br>
         <strong>Datum:</strong> ${formattedDate}<br>
         <strong>Zeit:</strong> Eintreffen 18h | Menüstart 19h<br>
         <strong>Plätze:</strong> ${anzahlPlaetze}
       </div>
-      <div style="background:#FFF;border:1px solid #C8956C;padding:20px;border-radius:8px;margin:24px 0;">
-        <h3 style="color:#A06840;margin-top:0;">Zwei Schritte notwendig:</h3>
-        <ol style="padding-left:20px;line-height:1.8;">
-          <li><strong>Logge dich zwingend</strong> unter <a href="https://fluss-schaenke.ch/" style="color:#C8956C;">fluss-schaenke.ch</a> → «Reservation verwalten» ein und überschreibe die Platzhalter-Gästedaten mit deinen Angaben.</li>
-          <li><strong>Bezahle die Anzahlung</strong> von <strong>CHF ${anzahlPlaetze * 50}.–</strong> (${anzahlPlaetze} &times; CHF 50) innert 48 Stunden auf folgendes Konto: CH61 0070 0114 8069 5993 4 | Verein Flusshüsli, 8037 Zürich | Zweck: ${escapeHtml(bookingId)}</li>
-        </ol>
-      </div>
       <p style="margin-top:20px;font-size:0.85em;color:#8C7060;border-top:1px solid #EAE0D5;padding-top:14px;">limmatelier.ch &middot; Hönggerstrasse 45a, 8037 Zürich &middot; <a href="mailto:booking@fluss-schaenke.ch" style="color:#C8956C;">booking@fluss-schaenke.ch</a></p>
     </div>`;
 
-  dispatchEmail(toEmail, subject, `Eingebucht! Booking-ID: ${bookingId}. Bitte Gästedaten aktualisieren und CHF ${anzahlPlaetze * 50} überweisen.`, bodyHtml);
+  dispatchEmail(toEmail, subject, `Eingebucht! Booking-ID: ${bookingId}. Bitte Gästedaten aktualisieren und CHF ${betrag} überweisen.`, bodyHtml);
 }
 
 // ============================================================
@@ -627,7 +636,7 @@ function handleStatusChange(e) {
       const hauptVorname = String(sheet.getRange(row, 3).getValue()).trim();
       const hauptNachname = String(sheet.getRange(row, 4).getValue()).trim();
       const hauptEmail = String(sheet.getRange(row, 5).getValue()).trim();
-      const hauptTelefon = sanitizePhoneBackend(sheet.getRange(row, 6).getValue());
+      const hauptTelefon = String(sheet.getRange(row, 6).getValue()).trim();
       const status = String(sheet.getRange(row, 7).getValue()).trim();
 
       if (status === 'Nachgerückt') return;
@@ -638,7 +647,7 @@ function handleStatusChange(e) {
       const timestamp = new Date().toISOString();
 
       for (let i = 1; i <= anzahlPlaetze; i++) {
-        resSheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, 'Begleitung', i, hauptEmail, 'Noch nicht definiert', 'Aktiv', timestamp, false, hauptTelefon]);
+        resSheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, 'Begleitung', i, hauptEmail, 'Noch nicht definiert', 'Aktiv', timestamp, false, "'" + hauptTelefon]);
       }
 
       sheet.getRange(row, 7).setValue('Nachgerückt');

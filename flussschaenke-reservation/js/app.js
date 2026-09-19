@@ -462,7 +462,7 @@ function showSuccessView(bookingId, isoDate, email, gaeste, isWaitlist = false) 
 
         const desc = sv.querySelector('p');
         if (desc) {
-            desc.innerHTML = `Du stehst auf der Warteliste für den <strong>${sanitizeForDOM(formatDateCH(isoDate))}</strong>. Eine Bestätigung wurde an <strong id="success-email"></strong> geschickt (Check Spam!). Sobald Plätze frei werden, melden wir uns – <strong>keine Zahlung notwendig</strong> bis dahin.`;
+            desc.innerHTML = `Du stehst auf der Warteliste für den <strong>${sanitizeForDOM(formatDateCH(isoDate))}</strong>. Eine Bestätigung wurde an <strong id="success-email"></strong> geschickt (Check Spam!). Sobald Plätze frei werden, melden wir uns – vorerst ist <strong>keine Anzahlung notwendig</strong> bis dahin.`;
         }
         document.getElementById('success-email').textContent = sanitizeForDOM(email);
 
