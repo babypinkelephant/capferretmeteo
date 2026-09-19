@@ -109,12 +109,13 @@ export const api = {
     /**
      * Neue Reservation erstellen
      */
-    async createReservation(datum, hauptNachname, hauptEmail, gaeste) {
+    async createReservation(datum, hauptNachname, hauptEmail, gaeste, hauptTelefon) {
         return await this.post('createReservation', {
             datum,
             hauptNachname,
             hauptEmail,
-            gaeste
+            gaeste,
+            hauptTelefon
         });
     },
 
@@ -139,15 +140,16 @@ export const api = {
         });
     },
     /**
-         * Auf die Warteliste setzen
-         */
-    async joinWaitlist(datum, hauptNachname, hauptEmail, hauptVorname, anzahlPlaetze) {
+     * Auf die Warteliste setzen
+     */
+    async joinWaitlist(datum, hauptNachname, hauptEmail, hauptVorname, anzahlPlaetze, hauptTelefon) {
         return await this.post('joinWaitlist', {
             datum: datum,
             hauptNachname: hauptNachname,
             hauptEmail: hauptEmail,
             hauptVorname: hauptVorname,
-            anzahlPlaetze: anzahlPlaetze
+            anzahlPlaetze: anzahlPlaetze,
+            hauptTelefon: hauptTelefon
         });
     }
 };

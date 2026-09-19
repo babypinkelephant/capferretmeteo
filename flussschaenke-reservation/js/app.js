@@ -337,8 +337,9 @@ async function handleReservationSubmit(e) {
     const rawHauptVorname = document.getElementById('haupt-vorname')?.value || '';
     const rawHauptNachname = document.getElementById('haupt-nachname')?.value || '';
     const rawHauptEmail = document.getElementById('haupt-email')?.value || '';
+    const rawHauptTelefon = document.getElementById('haupt-telefon')?.value || '';
 
-    if (!rawHauptVorname.trim() || !rawHauptNachname.trim() || !rawHauptEmail.trim()) {
+    if (!rawHauptVorname.trim() || !rawHauptNachname.trim() || !rawHauptEmail.trim() || !rawHauptTelefon.trim()) {
         alert('Bitte fülle alle Pflichtfelder des Hauptkontakts aus.');
         return;
     }
@@ -355,6 +356,12 @@ async function handleReservationSubmit(e) {
     const hauptVorname = sanitizeForBackend(rawHauptVorname);
     const hauptNachname = sanitizeForBackend(rawHauptNachname);
     const hauptEmail = sanitizeForBackend(rawHauptEmail, true);
+    const hauptTelefon = sanitizePhone(rawHauptTelefon);
+
+    if (!hauptTelefon) {
+        alert('Bitte gib eine gültige Telefonnummer an.');
+        return;
+    }
 
     const btn = document.getElementById('btn-submit-booking');
     const origText = btn.innerHTML;
@@ -364,7 +371,7 @@ async function handleReservationSubmit(e) {
     try {
         if (isWaitlistMode) {
             // --- Wartelisten-Pfad ---
-            const res = await api.joinWaitlist(selectedDate, hauptNachname, hauptEmail, hauptVorname, guestCount);
+            const res = await api.joinWaitlist(selectedDate, hauptNachname, hauptEmail, hauptVorname, guestCount, hauptTelefon);
             if (res.status === 'success') {
                 showSuccessView(null, selectedDate, hauptEmail, null, true);
             } else {
@@ -410,7 +417,7 @@ async function handleReservationSubmit(e) {
                 gaeste.push({ vorname, nachname, email, allergien: allergie });
             }
 
-            const res = await api.createReservation(selectedDate, hauptNachname, hauptEmail, gaeste);
+            const res = await api.createReservation(selectedDate, hauptNachname, hauptEmail, gaeste, hauptTelefon);
             if (res.status === 'success') {
                 showSuccessView(res.bookingId, selectedDate, hauptEmail, gaeste, false);
             } else {
@@ -774,4 +781,9 @@ function hasInvalidCharacters(str, isEmail = false) {
 function sanitizeForDOM(str) {
     if (!str) return '';
     return String(str).replace(/[<>]/g, '');
+}
+
+function sanitizePhone(str) {
+    if (!str) return '';
+    return String(str).replace(/[^0-9+\s]/g, '').trim();
 }
