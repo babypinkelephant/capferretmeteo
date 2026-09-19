@@ -114,7 +114,7 @@ function createReservation(payload) {
   const datum = sanitizeSheetInput(payload.datum);
   const hauptEmail = sanitizeSheetInput(payload.hauptEmail).toLowerCase();
   const hauptNachname = sanitizeSheetInput(payload.hauptNachname);
-  const hauptTelefon = sanitizeSheetInput(payload.hauptTelefon);
+  const hauptTelefon = sanitizePhoneBackend(payload.hauptTelefon);
   const gaeste = payload.gaeste || [];
 
   if (!OPEN_DATES.includes(datum)) return outputJSON({ status: 'error', message: 'Ungültiges Veranstaltungsdatum.' });
@@ -145,7 +145,7 @@ function createReservation(payload) {
     const gEmail = sanitizeSheetInput(gast.email);
     const gAllergie = sanitizeSheetInput(gast.allergien) || 'Keine Einschränkungen';
     
-    sheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, vName, nName, gEmail, gAllergie, 'Aktiv', timestamp, false, "'" + hauptTelefon]);
+    sheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, vName, nName, gEmail, gAllergie, 'Aktiv', timestamp, false, hauptTelefon]);
   });
 
   CacheService.getScriptCache().remove(CACHE_KEY);
@@ -160,7 +160,7 @@ function joinWaitlist(payload) {
   const hauptVorname   = sanitizeSheetInput(payload.hauptVorname);
   const hauptNachname  = sanitizeSheetInput(payload.hauptNachname);
   const hauptEmail     = sanitizeSheetInput(payload.hauptEmail).toLowerCase();
-  const hauptTelefon   = sanitizeSheetInput(payload.hauptTelefon);
+  const hauptTelefon   = sanitizePhoneBackend(payload.hauptTelefon);
   const anzahlPlaetze  = parseInt(payload.anzahlPlaetze, 10);
 
   if (!datum || !hauptVorname || !hauptNachname || !hauptEmail || !hauptTelefon) {
@@ -182,7 +182,7 @@ function joinWaitlist(payload) {
   }
 
   const timestamp = new Date().toISOString();
-  wlSheet.appendRow(["'" + datum, anzahlPlaetze, hauptVorname, hauptNachname, hauptEmail, "'" + hauptTelefon, 'Ausstehend', timestamp, false]);
+  wlSheet.appendRow(["'" + datum, anzahlPlaetze, hauptVorname, hauptNachname, hauptEmail, hauptTelefon, 'Ausstehend', timestamp, false]);
 
   sendWaitlistConfirmationEmail(hauptEmail, hauptVorname, datum, anzahlPlaetze);
 
@@ -301,6 +301,12 @@ function parseSheetDate(cellValue) {
 function sanitizeSheetInput(str) {
   if (!str) return '';
   return String(str).replace(/^[=+\-@]+/g, '').trim();
+}
+
+function sanitizePhoneBackend(str) {
+  if (!str) return '';
+  const cleaned = String(str).replace(/[^0-9+\s]/g, '').trim();
+  return "'" + cleaned;
 }
 
 function escapeHtml(str) {
@@ -621,7 +627,7 @@ function handleStatusChange(e) {
       const hauptVorname = String(sheet.getRange(row, 3).getValue()).trim();
       const hauptNachname = String(sheet.getRange(row, 4).getValue()).trim();
       const hauptEmail = String(sheet.getRange(row, 5).getValue()).trim();
-      const hauptTelefon = String(sheet.getRange(row, 6).getValue()).trim();
+      const hauptTelefon = sanitizePhoneBackend(sheet.getRange(row, 6).getValue());
       const status = String(sheet.getRange(row, 7).getValue()).trim();
 
       if (status === 'Nachgerückt') return;
@@ -632,7 +638,7 @@ function handleStatusChange(e) {
       const timestamp = new Date().toISOString();
 
       for (let i = 1; i <= anzahlPlaetze; i++) {
-        resSheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, 'Begleitung', i, hauptEmail, 'Noch nicht definiert', 'Aktiv', timestamp, false, "'" + hauptTelefon]);
+        resSheet.appendRow([bookingId, safeDatumString, hauptNachname, hauptEmail, 'Begleitung', i, hauptEmail, 'Noch nicht definiert', 'Aktiv', timestamp, false, hauptTelefon]);
       }
 
       sheet.getRange(row, 7).setValue('Nachgerückt');

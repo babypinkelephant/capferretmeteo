@@ -212,6 +212,10 @@ function setupEventListeners() {
         });
     });
 
+    document.getElementById('haupt-telefon')?.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^0-9+\s]/g, '');
+    });
+
     document.getElementById('reservation-form')?.addEventListener('submit', handleReservationSubmit);
 
     document.getElementById('btn-open-manage')?.addEventListener('click', () => {
@@ -358,7 +362,7 @@ async function handleReservationSubmit(e) {
     const hauptEmail = sanitizeForBackend(rawHauptEmail, true);
     const hauptTelefon = sanitizePhone(rawHauptTelefon);
 
-    if (!hauptTelefon) {
+    if (!hauptTelefon || hauptTelefon.length < 5) {
         alert('Bitte gib eine gültige Telefonnummer an.');
         return;
     }

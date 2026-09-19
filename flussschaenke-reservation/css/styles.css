@@ -470,6 +470,9 @@ label {
 
 input[type="text"],
 input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="password"],
 select,
 textarea {
     width: 100%;
@@ -482,6 +485,7 @@ textarea {
     background: #FFFFFF;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
     outline: none;
+    box-sizing: border-box;
 }
 
 input:focus, select:focus, textarea:focus {
